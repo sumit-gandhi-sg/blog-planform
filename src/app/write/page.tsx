@@ -5,7 +5,19 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Save, Send, X, Tag as TagIcon, Image as ImageIcon, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { RichTextEditor } from "@/components/ui/RichTextEditor";
+import dynamic from "next/dynamic";
+
+const RichTextEditor = dynamic(
+  () => import("@/components/ui/RichTextEditor"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-[420px] rounded-2xl border border-gray-200 dark:border-white/[0.07] flex items-center justify-center text-sm text-gray-400 animate-pulse bg-gray-50/50 dark:bg-white/[0.01]">
+        Loading writing canvas…
+      </div>
+    ),
+  }
+);
 import type { Tag } from "@/types";
 import { cn } from "@/lib/utils";
 

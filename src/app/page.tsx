@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import BlogsFeedPage from "./blogs/page";
 
 export default function HomePage() {
-  redirect("/blogs");
+  return <BlogsFeedPage />;
 }

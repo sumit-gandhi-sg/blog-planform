@@ -78,7 +78,7 @@ model OtpVerification {
   id        String   @id @default(cuid())
   userId    String
   otpHash   String
-  type      OtpType
+  type      String
   expiresAt DateTime
   verified  Boolean  @default(false)
   createdAt DateTime @default(now())
@@ -86,12 +86,6 @@ model OtpVerification {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, type])
-}
-
-enum OtpType {
-  EMAIL_VERIFY
-  PASSWORD_RESET
-  PHONE_VERIFY
 }
 
 enum BlogStatus {

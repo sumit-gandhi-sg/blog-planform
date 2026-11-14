@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "predev": "node -e \"try{if(require('fs').existsSync('.next/BUILD_ID')){require('fs').rmSync('.next',{recursive:true,force:true})}}catch(e){}\"",
     "dev": "next dev --turbo",
+    "clean": "node -e \"try{require('fs').rmSync('.next',{recursive:true,force:true});console.log('.next cleaned')}catch(e){}\"",
     "prewarm": "node scripts/prewarm.mjs",
     "build": "next build",
     "postinstall": "prisma generate",

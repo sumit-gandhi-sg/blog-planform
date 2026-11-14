@@ -4,12 +4,12 @@ import { type ReactNode } from "react";
 import { Controller, useFormContext, type RegisterOptions } from "react-hook-form";
 import { cn } from "@/lib/utils";
 
-export interface FieldValidation extends RegisterOptions {
+export type FieldValidation = RegisterOptions & {
   required?: boolean | string;
   maxLength?: { value: number; message: string };
   minLength?: { value: number; message: string };
   pattern?: { value: RegExp; message: string };
-}
+};
 
 export interface FieldConfig {
   name: string;
@@ -138,7 +138,6 @@ export const ControlledTextField = ({
               <input
                 ref={ref}
                 id={field.name}
-                name={field.name}
                 type={field.type ?? "text"}
                 placeholder={field.placeholder}
                 disabled={field.disabled}

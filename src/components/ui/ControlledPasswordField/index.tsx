@@ -114,7 +114,6 @@ export const ControlledPasswordField = ({
               <input
                 ref={ref}
                 id={field.name}
-                name={field.name}
                 type={showPassword ? "text" : "password"}
                 placeholder={field.placeholder ?? "••••••••"}
                 disabled={field.disabled}

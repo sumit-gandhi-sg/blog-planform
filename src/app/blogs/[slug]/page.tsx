@@ -11,22 +11,27 @@ import { ViewTracker } from "./ViewTracker";
 
 // Cache query to prevent duplicate DB trips between metadata and component
 const getBlog = cache(async (slug: string) => {
-  return prisma.blog.findUnique({
-    where: { slug },
-    include: {
-      author: {
-        select: {
-          id: true,
-          username: true,
-          name: true,
-          email: true,
-          avatarUrl: true,
+  try {
+    return await prisma.blog.findUnique({
+      where: { slug },
+      include: {
+        author: {
+          select: {
+            id: true,
+            username: true,
+            name: true,
+            email: true,
+            avatarUrl: true,
+          },
         },
+        tags: true,
+        _count: { select: { likes: true } },
       },
-      tags: true,
-      _count: { select: { likes: true } },
-    },
-  });
+    });
+  } catch (error) {
+    console.warn("Failed to fetch blog:", error);
+    return null;
+  }
 });
 
 // Cache page for 60 seconds (Incremental Static Regeneration)

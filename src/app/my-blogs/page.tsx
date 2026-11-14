@@ -25,12 +25,10 @@ export default function MyBlogsPage() {
     if (!user) return;
     setLoading(true);
     try {
-      const res = await fetch("/api/blogs?status=ALL&limit=50");
+      const res = await fetch("/api/blogs/me");
       const json = await res.json();
       if (res.ok && json.data) {
-        // Filter blogs authored by this user
-        const mine = json.data.filter((b: Blog) => b.author.id === user.id);
-        setBlogs(mine);
+        setBlogs(json.data);
       }
     } catch (err) {
       console.error(err);

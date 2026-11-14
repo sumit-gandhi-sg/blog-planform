@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/contexts/ToastContext";
 
 interface LikeButtonProps {
   blogId: string;
@@ -12,6 +13,7 @@ interface LikeButtonProps {
 
 export function LikeButton({ blogId, initialLikes }: LikeButtonProps) {
   const { user } = useAuth();
+  const toast = useToast();
   const [likes, setLikes] = useState(initialLikes);
   const [hasLiked, setHasLiked] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -31,7 +33,7 @@ export function LikeButton({ blogId, initialLikes }: LikeButtonProps) {
 
   const toggleLike = async () => {
     if (!user) {
-      alert("Please sign in to like this article.");
+      toast.error("Please sign in to like this article.");
       return;
     }
 

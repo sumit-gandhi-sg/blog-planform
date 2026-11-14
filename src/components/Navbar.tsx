@@ -7,7 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { ThemeToggle } from "./ui/ThemeToggle";
 
 export function Navbar() {
-  const { user, logout } = useAuth();
+  const { user, loading, logout } = useAuth();
   const pathname = usePathname();
 
   return (
@@ -31,7 +31,9 @@ export function Navbar() {
         <div className="flex items-center gap-2.5">
           <ThemeToggle />
 
-          {user ? (
+          {loading ? (
+            <div className="w-24 h-9 rounded-xl bg-gray-100 dark:bg-white/[0.04] animate-pulse" />
+          ) : user ? (
             <div className="flex items-center gap-2.5">
               <Link
                 href="/write"

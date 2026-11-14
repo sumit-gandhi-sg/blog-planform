@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/jwt";
+import path from "path";
+import { writeFile } from "fs/promises";
+import { randomBytes } from "crypto";
 
 export async function POST(req: Request) {
   try {
@@ -34,42 +37,28 @@ export async function POST(req: Request) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    // If Cloudinary is configured via CLOUDINARY_URL or keys:
-    if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
-      const cloudinary = (await import("cloudinary")).v2;
-      cloudinary.config({
-        cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-        api_key: process.env.CLOUDINARY_API_KEY,
-        api_secret: process.env.CLOUDINARY_API_SECRET,
-      });
-
-      const uploadResult = await new Promise<any>((resolve, reject) => {
-        const stream = cloudinary.uploader.upload_stream(
-          { folder: "inkwell_blog", resource_type: "image" },
-          (error, result) => {
-            if (error) reject(error);
-            else resolve(result);
-          }
-        );
-        stream.end(buffer);
-      });
+    // Storage: Local disk storage in public/uploads/ (avoids database base64 string bloat)
+    try {
+      const ext = path.extname(file.name) || ".jpg";
+      const filename = `${Date.now()}-${randomBytes(6).toString("hex")}${ext}`;
+      const uploadPath = path.join(process.cwd(), "public", "uploads", filename);
+      await writeFile(uploadPath, buffer);
 
       return NextResponse.json({
         success: true,
-        url: uploadResult.secure_url,
-        message: "Image uploaded successfully to cloud",
+        url: `/uploads/${filename}`,
+        message: "Image saved successfully",
+      });
+    } catch (fsErr) {
+      console.warn("Local filesystem write failed, falling back to data URI:", fsErr);
+      // Fallback for read-only serverless lambdas if disk is not writable
+      const base64Data = buffer.toString("base64");
+      return NextResponse.json({
+        success: true,
+        url: `data:${file.type};base64,${base64Data}`,
+        message: "Image stored as data URI",
       });
     }
-
-    // High-performance, serverless-safe data URI fallback
-    const base64Data = buffer.toString("base64");
-    const dataUrl = `data:${file.type};base64,${base64Data}`;
-
-    return NextResponse.json({
-      success: true,
-      url: dataUrl,
-      message: "Image uploaded successfully",
-    });
   } catch (error: any) {
     console.error("Upload error:", error);
     return NextResponse.json(

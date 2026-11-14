@@ -1,0 +1,78 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ── Brand Design Tokens ───────────────────────────────────── */
+@theme {
+  --color-accent:       #aa3bff;
+  --color-accent-dark:  #7c3aed;
+  --color-accent-light: #c084fc;
+
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  --animate-float:      float      9s  ease-in-out infinite;
+  --animate-float-slow: float      12s ease-in-out infinite reverse;
+  --animate-slide-up:   slideUp    0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-shake:      shake      0.35s ease;
+  --animate-spin-fast:  spin       0.7s  linear infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50%       { transform: translateY(-30px) scale(1.05); }
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes shake {
+  0%, 100%  { transform: translateX(0); }
+  20%, 60%  { transform: translateX(-5px); }
+  40%, 80%  { transform: translateX(5px); }
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  color-scheme: light dark;
+  @apply bg-white text-gray-900 dark:bg-[#16171d] dark:text-gray-100;
+}
+
+/* ── TipTap Rich Text Editor & Rendered Content ─────────────── */
+
+.tiptap p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: #9ca3af;
+  pointer-events: none;
+  height: 0;
+}
+
+.tiptap {
+  & h1 { @apply text-3xl font-bold mt-6 mb-3 text-gray-900 dark:text-gray-100; }
+  & h2 { @apply text-2xl font-bold mt-5 mb-2 text-gray-900 dark:text-gray-100; }
+  & h3 { @apply text-xl font-semibold mt-4 mb-2 text-gray-900 dark:text-gray-100; }
+  & p  { @apply text-gray-700 dark:text-gray-300 leading-relaxed my-2.5 text-[15px]; }
+  & a  { @apply text-accent underline underline-offset-2; }
+  & ul { @apply list-disc pl-5 my-3 text-gray-700 dark:text-gray-300; }
+  & ol { @apply list-decimal pl-5 my-3 text-gray-700 dark:text-gray-300; }
+  & li { @apply my-1 text-[15px]; }
+  & blockquote {
+    @apply border-l-4 border-accent/40 pl-4 italic my-4 text-gray-500 dark:text-gray-400;
+  }
+  & code {
+    @apply bg-gray-100 dark:bg-white/[0.08] text-accent px-1.5 py-0.5 rounded text-sm font-mono;
+  }
+  & pre {
+    @apply bg-gray-950 text-gray-100 rounded-xl p-4 my-4 overflow-x-auto text-sm font-mono leading-normal;
+    & code { @apply bg-transparent text-inherit p-0; }
+  }
+  & hr { @apply border-gray-200 dark:border-white/10 my-6; }
+  & img { @apply max-w-full rounded-xl my-4 shadow-sm; }
+  & mark { @apply bg-yellow-200 dark:bg-yellow-500/30 px-0.5 rounded; }
+}

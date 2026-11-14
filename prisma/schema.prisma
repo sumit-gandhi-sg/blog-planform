@@ -1,0 +1,101 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id              String            @id @default(cuid())
+  username        String            @unique @map("user_name")
+  email           String            @unique
+  name            String?
+  bio             String?
+  avatarUrl       String?           @map("avatar_url")
+  password        String
+  is_verified     Boolean           @default(false)
+  isEmailVerified Boolean           @default(false)
+  emailVerifiedAt DateTime?
+  lastLoginAt     DateTime?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  blogs           Blog[]
+  likes           Like[]
+  otpVerifications OtpVerification[]
+}
+
+model Blog {
+  id          String     @id @default(uuid())
+  title       String
+  slug        String     @unique
+  summary     String?
+  content     String     @db.Text
+  coverImage  String?
+  published   Boolean    @default(false)
+  publishedAt DateTime?
+  status      BlogStatus @default(DRAFT)
+  isFeatured  Boolean    @default(false)
+  readingTime Int?
+  views       Int        @default(0)
+
+  tags        Tag[]      @relation("BlogTags")
+  authorId    String
+  author      User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  likes       Like[]
+
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([authorId])
+  @@index([status, publishedAt])
+  @@index([slug])
+}
+
+model Like {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  blogId    String
+  blog      Blog     @relation(fields: [blogId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, blogId])
+  @@index([blogId])
+  @@index([userId])
+}
+
+model Tag {
+  id    String @id @default(uuid())
+  name  String @unique
+  blogs Blog[] @relation("BlogTags")
+}
+
+model OtpVerification {
+  id        String   @id @default(cuid())
+  userId    String
+  otpHash   String
+  type      OtpType
+  expiresAt DateTime
+  verified  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type])
+}
+
+enum OtpType {
+  EMAIL_VERIFY
+  PASSWORD_RESET
+  PHONE_VERIFY
+}
+
+enum BlogStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}

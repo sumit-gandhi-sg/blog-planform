@@ -1,25 +1,45 @@
+import { cache } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Calendar, Clock, Eye, Tag as TagIcon } from "lucide-react";
 import prisma from "@/lib/prisma";
-import { getCurrentUser } from "@/lib/jwt";
 import { cn, formatDate, getCardGradient } from "@/lib/utils";
 import { SafeHtml } from "@/components/ui/SafeHtml";
 import { LikeButton } from "./LikeButton";
 import { ViewTracker } from "./ViewTracker";
 
+// Cache query to prevent duplicate DB trips between metadata and component
+const getBlog = cache(async (slug: string) => {
+  return prisma.blog.findUnique({
+    where: { slug },
+    include: {
+      author: {
+        select: {
+          id: true,
+          username: true,
+          name: true,
+          email: true,
+          avatarUrl: true,
+        },
+      },
+      tags: true,
+      _count: { select: { likes: true } },
+    },
+  });
+});
+
+// Cache page for 60 seconds (Incremental Static Regeneration)
+export const revalidate = 60;
+
 interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
-// ── Dynamic SEO Metadata (Open Graph & Twitter Cards) ──────────
+// ── Dynamic SEO Metadata ──────────────────────────────────────
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const blog = await prisma.blog.findUnique({
-    where: { slug },
-    include: { author: true },
-  });
+  const blog = await getBlog(slug);
 
   if (!blog || blog.status !== "PUBLISHED") {
     return { title: "Article Not Found | Inkwell" };
@@ -63,47 +83,15 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 // ── Main Page (Server Component) ──────────────────────────────
 export default async function BlogDetailPage({ params }: PageProps) {
   const { slug } = await params;
-
-  const blog = await prisma.blog.findUnique({
-    where: { slug },
-    include: {
-      author: {
-        select: {
-          id: true,
-          username: true,
-          name: true,
-          email: true,
-          avatarUrl: true,
-        },
-      },
-      tags: true,
-      _count: { select: { likes: true } },
-    },
-  });
+  const blog = await getBlog(slug);
 
   if (!blog || blog.status !== "PUBLISHED") {
     notFound();
   }
 
-  // Check if current user has liked
-  const currentUser = await getCurrentUser();
-  let hasLiked = false;
-  if (currentUser) {
-    const like = await prisma.like.findUnique({
-      where: {
-        userId_blogId: {
-          userId: currentUser.id,
-          blogId: blog.id,
-        },
-      },
-    });
-    hasLiked = !!like;
-  }
-
   const gradient = getCardGradient(blog.id);
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://inkwell.blog";
 
-  // Google Article Structured Data (JSON-LD)
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "BlogPosting",
@@ -122,7 +110,7 @@ export default async function BlogDetailPage({ params }: PageProps) {
       name: "Inkwell",
       logo: {
         "@type": "ImageObject",
-        url: `${appUrl}/icon.png`,
+        url: `${appUrl}/favicon.svg`,
       },
     },
     mainEntityOfPage: {
@@ -228,7 +216,6 @@ export default async function BlogDetailPage({ params }: PageProps) {
             <LikeButton
               blogId={blog.id}
               initialLikes={blog._count.likes}
-              initialHasLiked={hasLiked}
             />
           </div>
         </div>
@@ -248,7 +235,6 @@ export default async function BlogDetailPage({ params }: PageProps) {
           <LikeButton
             blogId={blog.id}
             initialLikes={blog._count.likes}
-            initialHasLiked={hasLiked}
           />
         </div>
       </div>

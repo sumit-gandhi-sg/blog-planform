@@ -2,6 +2,32 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/jwt";
 
+export async function GET(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ hasLiked: false });
+    }
+
+    const { id: blogId } = await params;
+    const like = await prisma.like.findUnique({
+      where: {
+        userId_blogId: {
+          userId: user.id,
+          blogId,
+        },
+      },
+    });
+
+    return NextResponse.json({ hasLiked: !!like });
+  } catch {
+    return NextResponse.json({ hasLiked: false });
+  }
+}
+
 export async function POST(
   req: Request,
   { params }: { params: Promise<{ id: string }> }

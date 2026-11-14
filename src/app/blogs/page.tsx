@@ -48,6 +48,7 @@ function BlogCard({ blog }: { blog: Blog }) {
   return (
     <Link
       href={`/blogs/${blog.slug}`}
+      prefetch={true}
       className="group rounded-2xl border border-gray-200 dark:border-white/[0.07] bg-white dark:bg-white/[0.03] overflow-hidden flex flex-col no-underline text-inherit transition-all duration-300 hover:border-accent/50 hover:shadow-[0_8px_32px_rgba(124,58,237,0.12)] hover:-translate-y-0.5"
     >
       {blog.coverImage ? (

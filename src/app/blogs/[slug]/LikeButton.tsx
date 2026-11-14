@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,18 +8,26 @@ import { useAuth } from "@/contexts/AuthContext";
 interface LikeButtonProps {
   blogId: string;
   initialLikes: number;
-  initialHasLiked?: boolean;
 }
 
-export function LikeButton({
-  blogId,
-  initialLikes,
-  initialHasLiked = false,
-}: LikeButtonProps) {
+export function LikeButton({ blogId, initialLikes }: LikeButtonProps) {
   const { user } = useAuth();
   const [likes, setLikes] = useState(initialLikes);
-  const [hasLiked, setHasLiked] = useState(initialHasLiked);
+  const [hasLiked, setHasLiked] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      fetch(`/api/blogs/${blogId}/like`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (typeof data.hasLiked === "boolean") setHasLiked(data.hasLiked);
+        })
+        .catch(() => {});
+    } else {
+      setHasLiked(false);
+    }
+  }, [user, blogId]);
 
   const toggleLike = async () => {
     if (!user) {

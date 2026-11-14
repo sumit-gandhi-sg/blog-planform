@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev --turbo",
     "prewarm": "node scripts/prewarm.mjs",
-    "build": "prisma generate && next build",
+    "build": "next build",
+    "postinstall": "prisma generate",
     "start": "next start",
     "lint": "next lint",
     "prisma:generate": "prisma generate",

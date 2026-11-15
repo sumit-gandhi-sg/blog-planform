@@ -29,6 +29,9 @@ export const metadata: Metadata = {
     title: "Inkwell — Modern Publishing Platform",
     description: "Read, write, and discover thoughtful articles and stories.",
   },
+  verification: {
+    google: "googlee7771a4b1860da76.html",
+  },
   icons: {
     icon: "/favicon.ico",
   },

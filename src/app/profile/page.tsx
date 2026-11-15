@@ -53,6 +53,17 @@ export default function ProfilePage() {
 
   const [activeTab, setActiveTab] = useState<ProfileTab>("bookmarks");
 
+  // Sync tab from URL query if present
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get("tab");
+      if (tabParam === "bookmarks" || tabParam === "history" || tabParam === "settings") {
+        setActiveTab(tabParam);
+      }
+    }
+  }, []);
+
   // Bookmarks State
   const [bookmarks, setBookmarks] = useState<BookmarkItem[]>([]);
   const [bookmarksLoading, setBookmarksLoading] = useState(false);

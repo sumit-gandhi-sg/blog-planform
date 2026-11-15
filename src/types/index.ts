@@ -7,6 +7,7 @@ export interface AuthUser {
   name?: string | null;
   avatarUrl?: string | null;
   isEmailVerified: boolean;
+  role: "USER" | "ADMIN" | string;
 }
 
 export interface Tag {
@@ -57,4 +58,65 @@ export interface BlogsResponse {
   message: string;
   data: Blog[];
   meta: BlogsMeta;
+}
+
+// ── Admin System Types ─────────────────────────────────────────
+
+export interface AdminStats {
+  totalUsers: number;
+  verifiedUsers: number;
+  totalPublishedBlogs: number;
+  totalArchivedBlogs: number;
+  totalDraftsCount: number; // Anonymous count only
+  totalViews: number;
+  totalLikes: number;
+  totalTags: number;
+}
+
+export interface AdminUserListItem {
+  id: string;
+  username: string;
+  email: string;
+  name?: string | null;
+  role: string;
+  isEmailVerified: boolean;
+  createdAt: string;
+  lastLoginAt?: string | null;
+  _count: {
+    blogs: number;
+  };
+}
+
+export interface AdminBlogListItem {
+  id: string;
+  title: string;
+  slug: string;
+  summary?: string | null;
+  coverImage?: string | null;
+  status: "PUBLISHED" | "ARCHIVED";
+  isFeatured: boolean;
+  views: number;
+  readingTime?: number | null;
+  publishedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  author: {
+    id: string;
+    username: string;
+    name?: string | null;
+    email: string;
+    avatarUrl?: string | null;
+  };
+  tags: Tag[];
+  _count: {
+    likes: number;
+  };
+}
+
+export interface AdminTagListItem {
+  id: string;
+  name: string;
+  _count: {
+    blogs: number;
+  };
 }

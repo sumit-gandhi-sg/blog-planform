@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Feather, PenLine, LogOut, BookOpen } from "lucide-react";
+import { Feather, PenLine, LogOut, BookOpen, Shield } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { ThemeToggle } from "./ui/ThemeToggle";
 
@@ -35,6 +35,18 @@ export function Navbar() {
             <div className="w-24 h-9 rounded-xl bg-gray-100 dark:bg-white/[0.04] animate-pulse" />
           ) : user ? (
             <div className="flex items-center gap-2.5">
+              {user.role === "ADMIN" && (
+                <Link
+                  href="/admin"
+                  prefetch={true}
+                  className="flex items-center gap-1.5 rounded-xl border border-accent/30 bg-accent/10 px-3 py-2 text-sm font-semibold text-accent transition-all hover:bg-accent/20 no-underline shadow-sm"
+                  title="Admin Control Panel"
+                >
+                  <Shield size={14} className="stroke-[2.2]" />
+                  <span>Admin</span>
+                </Link>
+              )}
+
               <Link
                 href="/write"
                 prefetch={true}

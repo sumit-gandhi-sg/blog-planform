@@ -13,6 +13,7 @@ interface AuthContextType {
   forgetPassword: (email: string) => Promise<any>;
   verifyForgetOtp: (otp: string) => Promise<any>;
   resetPassword: (password: string) => Promise<any>;
+  refreshUser: () => Promise<void>;
   pendingEmail: string;
   pendingForgotEmail: string;
 }
@@ -148,6 +149,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         forgetPassword,
         verifyForgetOtp,
         resetPassword,
+        refreshUser,
         pendingEmail,
         pendingForgotEmail,
       }}

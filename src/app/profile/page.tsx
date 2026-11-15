@@ -45,7 +45,7 @@ function timeAgo(dateString: string): string {
 }
 
 export default function ProfilePage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, refreshUser } = useAuth();
   const toast = useToast();
   const router = useRouter();
 
@@ -223,6 +223,7 @@ export default function ProfilePage() {
 
       const json = await res.json();
       if (res.ok) {
+        await refreshUser();
         toast.success("Profile updated successfully!");
       } else {
         toast.error(json.message || "Failed to update profile");

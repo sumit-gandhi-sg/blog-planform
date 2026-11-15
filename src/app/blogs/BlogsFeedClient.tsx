@@ -109,26 +109,34 @@ function BlogCard({ blog }: { blog: Blog }) {
           </p>
         )}
 
-        <div className="mt-auto pt-3 flex items-center justify-between text-xs text-gray-400">
-          <div className="flex items-center gap-1.5">
-            <div className="w-5 h-5 rounded-full bg-gradient-to-br from-accent to-accent-dark flex items-center justify-center text-white text-[10px] font-bold shrink-0">
-              {(blog.author.name || blog.author.username || "A")[0].toUpperCase()}
+        {/* Author & Meta Details Footer */}
+        <div className="mt-auto pt-3 flex flex-col gap-2 border-t border-gray-100 dark:border-white/[0.05]">
+          {/* Author Name */}
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-accent to-accent-dark flex items-center justify-center text-white text-[11px] font-bold shrink-0 shadow-xs">
+              {(blog.author?.name || blog.author?.username || "A")[0].toUpperCase()}
             </div>
-            <span>{blog.author.name || blog.author.username}</span>
-          </div>
-          <div className="flex items-center gap-3">
-            {readingLabel(blog.readingTime) && (
-              <span className="flex items-center gap-1">
-                <Clock size={11} />
-                {readingLabel(blog.readingTime)}
-              </span>
-            )}
-            <span className="flex items-center gap-1">
-              <Eye size={11} />
-              {blog.views}
+            <span className="text-xs font-semibold text-gray-800 dark:text-gray-200 truncate">
+              {blog.author?.name || blog.author?.username}
             </span>
-            <span className="flex items-center gap-1">
-              <Calendar size={11} />
+          </div>
+
+          {/* Meta: Length, Views & Published Date */}
+          <div className="flex items-center justify-between text-[11px] text-gray-400">
+            <div className="flex items-center gap-3">
+              {readingLabel(blog.readingTime) && (
+                <span className="flex items-center gap-1 whitespace-nowrap">
+                  <Clock size={11} className="shrink-0" />
+                  {readingLabel(blog.readingTime)}
+                </span>
+              )}
+              <span className="flex items-center gap-1 whitespace-nowrap">
+                <Eye size={11} className="shrink-0" />
+                {blog.views.toLocaleString()}
+              </span>
+            </div>
+            <span className="flex items-center gap-1 whitespace-nowrap">
+              <Calendar size={11} className="shrink-0" />
               {formatDate(blog.publishedAt || blog.createdAt)}
             </span>
           </div>

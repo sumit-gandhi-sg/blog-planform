@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/jwt";
 import prisma from "@/lib/prisma";
+import { invalidateCache } from "@/lib/memoryCache";
 
 export async function GET() {
   try {
@@ -62,6 +63,8 @@ export async function PUT(req: Request) {
         isEmailVerified: true,
       },
     });
+
+    invalidateCache(); // Clear caches so updated name/avatar appears immediately across all feeds
 
     return NextResponse.json({
       success: true,

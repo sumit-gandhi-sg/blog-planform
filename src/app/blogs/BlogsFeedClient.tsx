@@ -10,12 +10,14 @@ import {
   Clock,
   Eye,
   SlidersHorizontal,
-  ChevronLeft,
-  ChevronRight,
   X,
+  ArrowUp,
+  Loader2,
+  Sparkles,
 } from "lucide-react";
 import type { Blog, Tag, BlogsMeta } from "@/types";
 import { cn, formatDate, getCardGradient } from "@/lib/utils";
+import { useSlidingInfiniteScroll } from "@/hooks/useSlidingInfiniteScroll";
 
 function readingLabel(mins?: number | null) {
   if (!mins) return null;
@@ -126,7 +128,7 @@ function BlogCard({ blog }: { blog: Blog }) {
 }
 
 type SortOption = "createdAt" | "views";
-const LIMIT = 9;
+const LIMIT = 6; // 6 cards per chunk (2 rows of 3)
 
 interface BlogsFeedClientProps {
   initialBlogs: Blog[];
@@ -139,38 +141,27 @@ export default function BlogsFeedClient({
   initialMeta,
   initialTags,
 }: BlogsFeedClientProps) {
-  const [blogs, setBlogs] = useState<Blog[]>(initialBlogs);
-  const [meta, setMeta] = useState<BlogsMeta | null>(initialMeta);
-  const [tags, setTags] = useState<Tag[]>(initialTags);
+  const [tags] = useState<Tag[]>(initialTags);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("createdAt");
-  const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const isFirstMount = useRef(true);
 
+  // Debounce search input
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => setDebouncedSearch(search), 400);
+    debounceRef.current = setTimeout(() => setDebouncedSearch(search), 350);
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
   }, [search]);
 
-  useEffect(() => {
-    if (isFirstMount.current) return;
-    setPage(1);
-  }, [selectedTags, debouncedSearch, sortBy]);
-
-  const fetchBlogs = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
+  // Page fetching function passed to the sliding window hook
+  const fetchPage = useCallback(
+    async (pageNum: number) => {
       const params = new URLSearchParams();
-      params.set("page", String(page));
+      params.set("page", String(pageNum));
       params.set("limit", String(LIMIT));
       params.set("sortBy", sortBy);
       params.set("order", "desc");
@@ -180,29 +171,48 @@ export default function BlogsFeedClient({
       const res = await fetch(`/api/blogs?${params.toString()}`);
       const json = await res.json();
       if (!res.ok) throw new Error(json.message || "Failed to load blogs");
-      setBlogs(json.data ?? []);
-      setMeta(json.meta ?? null);
-    } catch (err: any) {
-      setError(err.message || "Failed to load blogs.");
-    } finally {
-      setLoading(false);
-    }
-  }, [page, sortBy, selectedTags, debouncedSearch]);
+      return {
+        items: (json.data ?? []) as Blog[],
+        total: (json.meta?.total ?? 0) as number,
+      };
+    },
+    [sortBy, selectedTags, debouncedSearch]
+  );
 
-  useEffect(() => {
-    // Avoid refetching on the very first mount since initial data was provided by the server!
-    if (isFirstMount.current) {
-      isFirstMount.current = false;
-      return;
-    }
-    fetchBlogs();
-  }, [fetchBlogs]);
+  // High-performance Sliding Window Infinite Scroll
+  const {
+    renderedPages,
+    activePages,
+    topSpacerHeight,
+    isLoading,
+    isLoadingMore,
+    hasMore,
+    total,
+    totalRenderedItems,
+    error,
+    bottomSentinelRef,
+    topSentinelRef,
+    measurePageRef,
+  } = useSlidingInfiniteScroll<Blog>({
+    initialItems: initialBlogs,
+    initialTotal: initialMeta.total,
+    limit: LIMIT,
+    maxActivePages: 2, // Maximum 2 chunks (12 cards) rendered in DOM at once
+    fetchPage,
+    resetDeps: [selectedTags, debouncedSearch, sortBy],
+  });
 
   const toggleTag = (name: string) => {
     setSelectedTags((prev) =>
       prev.includes(name) ? prev.filter((t) => t !== name) : [...prev, name]
     );
   };
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const showBackToTop = activePages.length > 0 && (activePages[0] > 1 || topSpacerHeight > 0);
 
   return (
     <div className="min-h-screen">
@@ -218,14 +228,14 @@ export default function BlogsFeedClient({
         />
 
         <div className="relative mx-auto max-w-2xl animate-slide-up">
-          <p className="m-0 text-xs font-semibold uppercase tracking-[0.24em] text-accent mb-3">
-            Inkwell Blog
+          <p className="m-0 text-xs font-semibold uppercase tracking-[0.24em] text-accent mb-3 flex items-center justify-center gap-1.5">
+            <Sparkles size={14} /> Inkwell Tech Feed
           </p>
           <h1 className="m-0 text-4xl sm:text-5xl font-bold tracking-tight text-gray-900 dark:text-gray-100 mb-4">
             Stories worth reading
           </h1>
           <p className="m-0 text-base text-gray-500 dark:text-gray-400 mb-8">
-            Discover articles, tutorials, and insights from our community of writers.
+            Discover articles, tutorials, and vulnerability disclosures from our engineering community.
           </p>
 
           <div className="relative mx-auto max-w-lg">
@@ -236,7 +246,7 @@ export default function BlogsFeedClient({
             <input
               id="blogs-search"
               type="text"
-              placeholder="Search articles…"
+              placeholder="Search articles by title or topic…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full pl-10 pr-10 py-3 rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/[0.04] text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-accent/40 transition"
@@ -253,8 +263,8 @@ export default function BlogsFeedClient({
         </div>
       </section>
 
-      {/* ── Filters ────────────────────────────────────────────────────── */}
-      <div className="border-y border-gray-200/80 dark:border-white/[0.07] bg-gray-50/50 dark:bg-white/[0.015] py-4 px-4">
+      {/* ── Filters Bar ─────────────────────────────────────────────────── */}
+      <div className="border-y border-gray-200/80 dark:border-white/[0.07] bg-gray-50/50 dark:bg-white/[0.015] py-4 px-4 sticky top-[61px] z-30 backdrop-blur-md">
         <div className="mx-auto max-w-6xl flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-1.5 text-xs text-gray-500 font-medium shrink-0">
             <TagIcon size={13} />
@@ -294,7 +304,7 @@ export default function BlogsFeedClient({
                 className={cn(
                   "text-xs font-medium px-3 py-1.5 rounded-full border transition-all cursor-pointer",
                   sortBy === opt
-                    ? "bg-accent text-white border-accent"
+                    ? "bg-accent text-white border-accent shadow-sm"
                     : "border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-400 hover:border-accent hover:text-accent"
                 )}
               >
@@ -305,24 +315,21 @@ export default function BlogsFeedClient({
         </div>
       </div>
 
-      {/* ── Blog Grid ──────────────────────────────────────────────────── */}
-      <section className="mx-auto max-w-6xl px-4 py-10">
+      {/* ── Blog Grid Section ───────────────────────────────────────────── */}
+      <section className="mx-auto max-w-6xl px-4 py-10 relative">
         {error && (
           <div className="text-center py-20 text-red-500 dark:text-red-400 text-sm">
-            {error} —{" "}
-            <button onClick={fetchBlogs} className="underline cursor-pointer">
-              retry
-            </button>
+            {error}
           </div>
         )}
 
-        {loading ? (
+        {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {Array.from({ length: LIMIT }).map((_, i) => (
               <SkeletonCard key={i} />
             ))}
           </div>
-        ) : blogs.length === 0 ? (
+        ) : total === 0 ? (
           <div className="text-center py-24">
             <p className="text-4xl mb-3">🔍</p>
             <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-1">
@@ -333,34 +340,68 @@ export default function BlogsFeedClient({
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {blogs.map((blog) => (
-              <BlogCard key={blog.id} blog={blog} />
-            ))}
+          <div>
+            {/* ── Top Spacer: Prevents scroll-jumping when top pages unmount ── */}
+            {topSpacerHeight > 0 && (
+              <div
+                style={{ height: `${topSpacerHeight}px` }}
+                className="w-full"
+                aria-hidden="true"
+              />
+            )}
+
+            {/* ── Top Sentinel: Senses scroll-up to restore previous chunk ── */}
+            <div ref={topSentinelRef} className="h-2 w-full" aria-hidden="true" />
+
+            {/* ── Active Rendered Page Chunks (Max 2 pages in DOM) ── */}
+            <div className="flex flex-col gap-6">
+              {renderedPages.map(({ pageNumber, items }) => (
+                <div
+                  key={`page-group-${pageNumber}`}
+                  ref={measurePageRef(pageNumber)}
+                  className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+                >
+                  {items.map((blog) => (
+                    <BlogCard key={blog.id} blog={blog} />
+                  ))}
+                </div>
+              ))}
+            </div>
+
+            {/* ── Bottom Sentinel: Senses scroll-down to fetch next chunk ── */}
+            <div ref={bottomSentinelRef} className="h-10 w-full" aria-hidden="true" />
+
+            {/* ── Loading Spinner for next chunk ── */}
+            {isLoadingMore && (
+              <div className="mt-8 flex flex-col items-center justify-center gap-2 text-gray-400 py-6">
+                <Loader2 size={24} className="animate-spin text-accent" />
+                <span className="text-xs font-medium">Loading more articles…</span>
+              </div>
+            )}
+
+            {/* ── Feed End Status & Sliding Buffer Info ── */}
+            {!hasMore && total > 0 && !isLoadingMore && (
+              <div className="mt-12 text-center py-8 border-t border-gray-100 dark:border-white/[0.05]">
+                <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                  ✨ You have reached the end of the feed
+                </p>
+                <p className="text-xs text-gray-400">
+                  Total {total} articles loaded • High-performance sliding buffer active ({totalRenderedItems} cards in DOM)
+                </p>
+              </div>
+            )}
           </div>
         )}
 
-        {/* ── Pagination ───────────────────────────────────────────────── */}
-        {meta && meta.totalPages > 1 && (
-          <div className="mt-12 flex items-center justify-center gap-2">
-            <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page === 1}
-              className="p-2 rounded-xl border border-gray-200 dark:border-white/10 text-gray-500 hover:border-accent hover:text-accent disabled:opacity-30 disabled:cursor-not-allowed transition"
-            >
-              <ChevronLeft size={16} />
-            </button>
-            <span className="text-xs text-gray-500 font-medium px-2">
-              Page {page} of {meta.totalPages}
-            </span>
-            <button
-              onClick={() => setPage((p) => Math.min(meta.totalPages, p + 1))}
-              disabled={page === meta.totalPages}
-              className="p-2 rounded-xl border border-gray-200 dark:border-white/10 text-gray-500 hover:border-accent hover:text-accent disabled:opacity-30 disabled:cursor-not-allowed transition"
-            >
-              <ChevronRight size={16} />
-            </button>
-          </div>
+        {/* ── Floating "Back to Top" Button ──────────────────────────────── */}
+        {showBackToTop && (
+          <button
+            onClick={scrollToTop}
+            aria-label="Back to top"
+            className="fixed bottom-6 right-6 z-40 p-3 rounded-full bg-accent text-white shadow-lg hover:bg-accent-dark transition-all duration-300 hover:scale-110 flex items-center justify-center cursor-pointer border-none"
+          >
+            <ArrowUp size={18} />
+          </button>
         )}
       </section>
     </div>

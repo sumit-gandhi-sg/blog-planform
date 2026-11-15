@@ -42,7 +42,7 @@ export default async function BlogsPage() {
             _count: { select: { likes: true } },
           },
           orderBy: { createdAt: "desc" },
-          take: 9,
+          take: 6,
         }),
         prisma.blog.count({
           where: { status: "PUBLISHED", published: true },
@@ -86,8 +86,8 @@ export default async function BlogsPage() {
   const initialMeta = {
     total,
     page: 1,
-    limit: 9,
-    totalPages: Math.ceil(total / 9) || 1,
+    limit: 6,
+    totalPages: Math.ceil(total / 6) || 1,
   };
 
   return (

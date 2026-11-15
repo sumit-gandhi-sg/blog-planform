@@ -52,7 +52,20 @@ export async function GET(req: Request) {
       prisma.blog.count({ where }),
       prisma.blog.findMany({
         where,
-        include: {
+        select: {
+          id: true,
+          title: true,
+          slug: true,
+          summary: true,
+          coverImage: true,
+          published: true,
+          publishedAt: true,
+          status: true,
+          isFeatured: true,
+          readingTime: true,
+          views: true,
+          createdAt: true,
+          updatedAt: true,
           author: { select: { id: true, username: true, name: true, email: true, avatarUrl: true } },
           tags: true,
           _count: { select: { likes: true } },

@@ -13,7 +13,20 @@ export async function GET() {
       where: {
         authorId: user.id,
       },
-      include: {
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        summary: true,
+        coverImage: true,
+        published: true,
+        publishedAt: true,
+        status: true,
+        isFeatured: true,
+        readingTime: true,
+        views: true,
+        createdAt: true,
+        updatedAt: true,
         author: {
           select: {
             id: true,

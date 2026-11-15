@@ -15,7 +15,20 @@ export default async function BlogsPage() {
       const [blogs, count, fetchedTags] = await Promise.all([
         prisma.blog.findMany({
           where: { status: "PUBLISHED", published: true },
-          include: {
+          select: {
+            id: true,
+            title: true,
+            slug: true,
+            summary: true,
+            coverImage: true,
+            published: true,
+            publishedAt: true,
+            status: true,
+            isFeatured: true,
+            readingTime: true,
+            views: true,
+            createdAt: true,
+            updatedAt: true,
             author: {
               select: {
                 id: true,
@@ -47,7 +60,6 @@ export default async function BlogsPage() {
           title: b.title,
           slug: b.slug,
           summary: b.summary,
-          content: b.content,
           coverImage: b.coverImage,
           published: b.published,
           publishedAt: b.publishedAt ? b.publishedAt.toISOString() : null,

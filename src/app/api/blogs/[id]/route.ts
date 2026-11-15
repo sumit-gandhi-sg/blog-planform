@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/jwt";
 import { calculateReadingTime } from "@/lib/utils";
+import { invalidateCache } from "@/lib/memoryCache";
 
 export async function PUT(
   req: Request,
@@ -67,6 +68,8 @@ export async function PUT(
       },
     });
 
+    invalidateCache("blogs");
+
     return NextResponse.json({
       success: true,
       message: "Article updated successfully",
@@ -108,6 +111,8 @@ export async function DELETE(
     }
 
     await prisma.blog.delete({ where: { id } });
+
+    invalidateCache("blogs");
 
     return NextResponse.json({
       success: true,

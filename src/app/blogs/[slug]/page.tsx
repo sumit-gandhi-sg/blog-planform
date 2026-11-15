@@ -2,6 +2,7 @@ import { cache } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowLeft, Calendar, Clock, Eye, Tag as TagIcon } from "lucide-react";
 import prisma from "@/lib/prisma";
 import { cn, formatDate, getCardGradient, getBaseUrl } from "@/lib/utils";
@@ -36,6 +37,21 @@ const getBlog = cache(async (slug: string) => {
 
 // Cache page for 60 seconds (Incremental Static Regeneration)
 export const revalidate = 60;
+
+// Pre-render published blogs at build time for instant CDN delivery
+export async function generateStaticParams() {
+  try {
+    const blogs = await prisma.blog.findMany({
+      where: { status: "PUBLISHED", published: true },
+      select: { slug: true },
+      take: 100,
+    });
+    return blogs.map((b) => ({ slug: b.slug }));
+  } catch (error) {
+    console.warn("generateStaticParams skipped at build time:", error);
+    return [];
+  }
+}
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -137,10 +153,13 @@ export default async function BlogDetailPage({ params }: PageProps) {
       {/* ── Cover Banner ────────────────────────────────────────── */}
       {blog.coverImage ? (
         <div className="relative h-72 sm:h-96 w-full overflow-hidden">
-          <img
+          <Image
             src={blog.coverImage}
             alt={blog.title}
-            className="h-full w-full object-cover"
+            fill
+            priority
+            sizes="(max-width: 1200px) 100vw, 1200px"
+            className="object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
         </div>

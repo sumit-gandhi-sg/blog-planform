@@ -29,7 +29,7 @@ export interface Blog {
   title: string;
   slug: string;
   summary?: string | null;
-  content: string;
+  content?: string;
   coverImage?: string | null;
   published: boolean;
   publishedAt?: string | null;

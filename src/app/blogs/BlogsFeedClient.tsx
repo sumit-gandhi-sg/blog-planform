@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   Search,
   Tag as TagIcon,
@@ -52,12 +53,15 @@ function BlogCard({ blog }: { blog: Blog }) {
       className="group rounded-2xl border border-gray-200 dark:border-white/[0.07] bg-white dark:bg-white/[0.03] overflow-hidden flex flex-col no-underline text-inherit transition-all duration-300 hover:border-accent/50 hover:shadow-[0_8px_32px_rgba(124,58,237,0.12)] hover:-translate-y-0.5"
     >
       {blog.coverImage ? (
-        <img
-          src={blog.coverImage}
-          alt={blog.title}
-          className="h-44 w-full object-cover"
-          loading="lazy"
-        />
+        <div className="relative h-44 w-full overflow-hidden">
+          <Image
+            src={blog.coverImage}
+            alt={blog.title}
+            fill
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
+          />
+        </div>
       ) : (
         <div className={cn("h-44 w-full bg-gradient-to-br flex items-end p-4", gradient)}>
           {blog.isFeatured && (

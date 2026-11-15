@@ -50,7 +50,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     return { title: "Article Not Found | Inkwell" };
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://inkwell.blog";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "https://inkwell.blog");
   const url = `${appUrl}/blogs/${blog.slug}`;
   const title = blog.title;
   const description = blog.summary || blog.title;
@@ -65,8 +65,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       description,
       url,
       type: "article",
-      publishedTime: (blog.publishedAt || blog.createdAt).toISOString(),
-      authors: [blog.author.name || blog.author.username],
+      publishedTime: new Date(blog.publishedAt || blog.createdAt).toISOString(),
+      authors: [blog.author?.name || blog.author?.username || "Inkwell Writer"],
       images: [
         {
           url: image,
@@ -95,7 +95,7 @@ export default async function BlogDetailPage({ params }: PageProps) {
   }
 
   const gradient = getCardGradient(blog.id);
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://inkwell.blog";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "https://inkwell.blog");
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -103,12 +103,12 @@ export default async function BlogDetailPage({ params }: PageProps) {
     headline: blog.title,
     description: blog.summary || blog.title,
     image: blog.coverImage ? [blog.coverImage] : undefined,
-    datePublished: (blog.publishedAt || blog.createdAt).toISOString(),
-    dateModified: blog.updatedAt.toISOString(),
+    datePublished: new Date(blog.publishedAt || blog.createdAt).toISOString(),
+    dateModified: new Date(blog.updatedAt || blog.createdAt).toISOString(),
     author: {
       "@type": "Person",
-      name: blog.author.name || blog.author.username,
-      url: `${appUrl}/author/${blog.author.username}`,
+      name: blog.author?.name || blog.author?.username || "Inkwell Writer",
+      url: `${appUrl}/author/${blog.author?.username || ""}`,
     },
     publisher: {
       "@type": "Organization",
@@ -191,13 +191,13 @@ export default async function BlogDetailPage({ params }: PageProps) {
           {/* Author */}
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-full bg-gradient-to-br from-accent to-accent-dark flex items-center justify-center text-white text-sm font-bold shrink-0">
-              {(blog.author.name || blog.author.username || "A")[0].toUpperCase()}
+              {(blog.author?.name || blog.author?.username || "A")[0].toUpperCase()}
             </div>
             <div>
               <p className="m-0 text-sm font-semibold text-gray-900 dark:text-gray-100">
-                {blog.author.name || blog.author.username}
+                {blog.author?.name || blog.author?.username || "Inkwell Writer"}
               </p>
-              <p className="m-0 text-xs text-gray-400">@{blog.author.username}</p>
+              <p className="m-0 text-xs text-gray-400">@{blog.author?.username || "writer"}</p>
             </div>
           </div>
 

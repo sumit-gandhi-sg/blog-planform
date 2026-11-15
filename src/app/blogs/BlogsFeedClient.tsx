@@ -157,7 +157,7 @@ export default function BlogsFeedClient({
     };
   }, [search]);
 
-  // Page fetching function passed to the sliding window hook
+  // Page fetching function passed to the infinite scroll hook
   const fetchPage = useCallback(
     async (pageNum: number) => {
       const params = new URLSearchParams();
@@ -179,11 +179,10 @@ export default function BlogsFeedClient({
     [sortBy, selectedTags, debouncedSearch]
   );
 
-  // High-performance Sliding Window Infinite Scroll
+  // Smooth Continuous Infinite Scroll
   const {
     renderedPages,
     activePages,
-    topSpacerHeight,
     isLoading,
     isLoadingMore,
     hasMore,
@@ -191,13 +190,10 @@ export default function BlogsFeedClient({
     totalRenderedItems,
     error,
     bottomSentinelRef,
-    topSentinelRef,
-    measurePageRef,
   } = useSlidingInfiniteScroll<Blog>({
     initialItems: initialBlogs,
     initialTotal: initialMeta.total,
     limit: LIMIT,
-    maxActivePages: 2, // Maximum 2 chunks (12 cards) rendered in DOM at once
     fetchPage,
     resetDeps: [selectedTags, debouncedSearch, sortBy],
   });
@@ -212,7 +208,7 @@ export default function BlogsFeedClient({
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const showBackToTop = activePages.length > 0 && (activePages[0] > 1 || topSpacerHeight > 0);
+  const showBackToTop = activePages.length > 1;
 
   return (
     <div className="min-h-screen">
@@ -341,24 +337,11 @@ export default function BlogsFeedClient({
           </div>
         ) : (
           <div>
-            {/* ── Top Spacer: Prevents scroll-jumping when top pages unmount ── */}
-            {topSpacerHeight > 0 && (
-              <div
-                style={{ height: `${topSpacerHeight}px` }}
-                className="w-full"
-                aria-hidden="true"
-              />
-            )}
-
-            {/* ── Top Sentinel: Senses scroll-up to restore previous chunk ── */}
-            <div ref={topSentinelRef} className="h-2 w-full" aria-hidden="true" />
-
-            {/* ── Active Rendered Page Chunks (Max 2 pages in DOM) ── */}
+            {/* ── Continuous Rendered Page Chunks ── */}
             <div className="flex flex-col gap-6">
               {renderedPages.map(({ pageNumber, items }) => (
                 <div
                   key={`page-group-${pageNumber}`}
-                  ref={measurePageRef(pageNumber)}
                   className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
                 >
                   {items.map((blog) => (
@@ -379,14 +362,14 @@ export default function BlogsFeedClient({
               </div>
             )}
 
-            {/* ── Feed End Status & Sliding Buffer Info ── */}
+            {/* ── Feed End Status ── */}
             {!hasMore && total > 0 && !isLoadingMore && (
               <div className="mt-12 text-center py-8 border-t border-gray-100 dark:border-white/[0.05]">
                 <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
                   ✨ You have reached the end of the feed
                 </p>
                 <p className="text-xs text-gray-400">
-                  Total {total} articles loaded • High-performance sliding buffer active ({totalRenderedItems} cards in DOM)
+                  Total {total} articles loaded ({totalRenderedItems} displayed)
                 </p>
               </div>
             )}

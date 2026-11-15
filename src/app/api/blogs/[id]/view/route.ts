@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { getCurrentUser } from "@/lib/jwt";
 
 export async function POST(
   req: Request,
@@ -7,6 +8,7 @@ export async function POST(
 ) {
   try {
     const { id: idOrSlug } = await params;
+    const user = await getCurrentUser();
 
     // Support both ID and slug seamlessly
     const blog = await prisma.blog.findFirst({
@@ -27,6 +29,24 @@ export async function POST(
       },
       select: { views: true },
     });
+
+    // Automatically record reading history for authenticated users
+    if (user) {
+      await prisma.readingHistory.upsert({
+        where: {
+          userId_blogId: {
+            userId: user.id,
+            blogId: blog.id,
+          },
+        },
+        update: { viewedAt: new Date() },
+        create: {
+          userId: user.id,
+          blogId: blog.id,
+          viewedAt: new Date(),
+        },
+      }).catch((err) => console.warn("Failed to record reading history:", err));
+    }
 
     return NextResponse.json({ success: true, views: updated.views });
   } catch (error: any) {

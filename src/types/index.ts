@@ -5,6 +5,7 @@ export interface AuthUser {
   email: string;
   username: string;
   name?: string | null;
+  bio?: string | null;
   avatarUrl?: string | null;
   isEmailVerified: boolean;
   role: "USER" | "ADMIN" | string;
@@ -42,6 +43,7 @@ export interface Blog {
   author: BlogAuthor;
   likesCount?: number;
   hasLiked?: boolean;
+  isBookmarked?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -58,6 +60,45 @@ export interface BlogsResponse {
   message: string;
   data: Blog[];
   meta: BlogsMeta;
+}
+
+// ── Comment Types ──────────────────────────────────────────────
+
+export interface CommentAuthor {
+  id: string;
+  username: string;
+  name?: string | null;
+  avatarUrl?: string | null;
+}
+
+export interface CommentItem {
+  id: string;
+  content: string;
+  blogId: string;
+  authorId: string;
+  author: CommentAuthor;
+  parentId?: string | null;
+  replies?: CommentItem[];
+  likesCount: number;
+  hasLiked?: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ── Bookmark & Reading History Types ───────────────────────────
+
+export interface BookmarkItem {
+  id: string;
+  blogId: string;
+  blog: Blog;
+  createdAt: string;
+}
+
+export interface ReadingHistoryItem {
+  id: string;
+  blogId: string;
+  blog: Blog;
+  viewedAt: string;
 }
 
 // ── Admin System Types ─────────────────────────────────────────

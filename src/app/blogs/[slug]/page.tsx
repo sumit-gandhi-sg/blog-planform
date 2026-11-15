@@ -8,6 +8,8 @@ import prisma from "@/lib/prisma";
 import { cn, formatDate, getCardGradient, getBaseUrl } from "@/lib/utils";
 import { SafeHtml } from "@/components/ui/SafeHtml";
 import { LikeButton } from "./LikeButton";
+import { BookmarkButton } from "@/components/BookmarkButton";
+import { CommentsSection } from "./CommentsSection";
 import { ViewTracker } from "./ViewTracker";
 
 // Cache query to prevent duplicate DB trips between metadata and component
@@ -236,18 +238,24 @@ export default async function BlogDetailPage({ params }: PageProps) {
               {blog.views.toLocaleString()} views
             </span>
 
-            {/* Like Counter and Action */}
-            <LikeButton
-              blogId={blog.id}
-              initialLikes={blog._count.likes}
-            />
+            {/* Like & Bookmark Action Buttons */}
+            <div className="flex items-center gap-2">
+              <LikeButton
+                blogId={blog.id}
+                initialLikes={blog._count.likes}
+              />
+              <BookmarkButton
+                blogId={blog.id}
+                showText={false}
+              />
+            </div>
           </div>
         </div>
 
         {/* ── Sanitized Content (Safe from Stored XSS) ────────── */}
         <SafeHtml html={blog.content} />
 
-        {/* ── Footer Navigation ──────────────────────────────── */}
+        {/* ── Footer Navigation & Actions ─────────────────────── */}
         <div className="mt-12 pt-8 border-t border-gray-200 dark:border-white/[0.07] flex items-center justify-between">
           <Link
             href="/blogs"
@@ -256,11 +264,20 @@ export default async function BlogDetailPage({ params }: PageProps) {
             <ArrowLeft size={15} /> Back to feed
           </Link>
 
-          <LikeButton
-            blogId={blog.id}
-            initialLikes={blog._count.likes}
-          />
+          <div className="flex items-center gap-2.5">
+            <LikeButton
+              blogId={blog.id}
+              initialLikes={blog._count.likes}
+            />
+            <BookmarkButton
+              blogId={blog.id}
+              showText={true}
+            />
+          </div>
         </div>
+
+        {/* ── Discussion & Nested Comments ─────────────────────── */}
+        <CommentsSection blogId={blog.id} />
       </div>
     </article>
   );

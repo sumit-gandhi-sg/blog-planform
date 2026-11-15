@@ -63,7 +63,19 @@ export function Navbar() {
                 title="My Articles"
               >
                 <BookOpen size={14} />
-                <span className="max-w-[100px] truncate">{user.username || user.email}</span>
+                <span>Articles</span>
+              </Link>
+
+              <Link
+                href="/profile"
+                prefetch={true}
+                className="flex items-center gap-2 rounded-xl border border-gray-200 dark:border-white/10 px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-200 transition-all hover:border-accent hover:text-accent no-underline"
+                title="Profile & Bookmarks"
+              >
+                <div className="w-5 h-5 rounded-full bg-gradient-to-br from-accent to-accent-dark flex items-center justify-center text-white text-[10px] font-bold shrink-0">
+                  {(user.name || user.username || "U")[0].toUpperCase()}
+                </div>
+                <span className="hidden lg:inline max-w-[90px] truncate">{user.name || user.username}</span>
               </Link>
 
               <button

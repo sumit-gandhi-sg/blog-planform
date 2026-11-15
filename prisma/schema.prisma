@@ -26,6 +26,10 @@ model User {
 
   blogs           Blog[]
   likes           Like[]
+  comments        Comment[]
+  commentLikes    CommentLike[]
+  bookmarks       Bookmark[]
+  readingHistory  ReadingHistory[]
   otpVerifications OtpVerification[]
 }
 
@@ -43,10 +47,13 @@ model Blog {
   readingTime Int?
   views       Int        @default(0)
 
-  tags        Tag[]      @relation("BlogTags")
-  authorId    String
-  author      User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  likes       Like[]
+  tags           Tag[]            @relation("BlogTags")
+  authorId       String
+  author         User             @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  likes          Like[]
+  comments       Comment[]
+  bookmarks      Bookmark[]
+  readingHistory ReadingHistory[]
 
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
@@ -54,6 +61,64 @@ model Blog {
   @@index([authorId])
   @@index([status, publishedAt])
   @@index([slug])
+}
+
+model Comment {
+  id        String        @id @default(uuid())
+  content   String        @db.Text
+  blogId    String
+  blog      Blog          @relation(fields: [blogId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  parentId  String?
+  parent    Comment?      @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   Comment[]     @relation("CommentReplies")
+  likes     CommentLike[]
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@index([blogId, createdAt])
+  @@index([parentId])
+  @@index([authorId])
+}
+
+model CommentLike {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  commentId String
+  comment   Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, commentId])
+  @@index([commentId])
+  @@index([userId])
+}
+
+model Bookmark {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  blogId    String
+  blog      Blog     @relation(fields: [blogId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, blogId])
+  @@index([userId, createdAt])
+  @@index([blogId])
+}
+
+model ReadingHistory {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  blogId    String
+  blog      Blog     @relation(fields: [blogId], references: [id], onDelete: Cascade)
+  viewedAt  DateTime @default(now())
+
+  @@unique([userId, blogId])
+  @@index([userId, viewedAt])
+  @@index([blogId])
 }
 
 model Like {

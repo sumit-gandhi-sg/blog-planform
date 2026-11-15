@@ -18,6 +18,7 @@ import {
 import type { Blog, Tag, BlogsMeta } from "@/types";
 import { cn, formatDate, getCardGradient } from "@/lib/utils";
 import { useSlidingInfiniteScroll } from "@/hooks/useSlidingInfiniteScroll";
+import { BookmarkButton } from "@/components/BookmarkButton";
 
 function readingLabel(mins?: number | null) {
   if (!mins) return null;
@@ -49,32 +50,42 @@ function BlogCard({ blog }: { blog: Blog }) {
   const gradient = getCardGradient(blog.id);
 
   return (
-    <Link
-      href={`/blogs/${blog.slug}`}
-      prefetch={true}
-      className="group rounded-2xl border border-gray-200 dark:border-white/[0.07] bg-white dark:bg-white/[0.03] overflow-hidden flex flex-col no-underline text-inherit transition-all duration-300 hover:border-accent/50 hover:shadow-[0_8px_32px_rgba(124,58,237,0.12)] hover:-translate-y-0.5"
-    >
-      {blog.coverImage ? (
-        <div className="relative h-44 w-full overflow-hidden">
-          <Image
-            src={blog.coverImage}
-            alt={blog.title}
-            fill
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
-          />
-        </div>
-      ) : (
-        <div className={cn("h-44 w-full bg-gradient-to-br flex items-end p-4", gradient)}>
-          {blog.isFeatured && (
-            <span className="text-xs font-semibold bg-white/20 backdrop-blur-sm text-white px-2.5 py-1 rounded-full">
-              ✦ Featured
-            </span>
-          )}
-        </div>
-      )}
+    <div className="relative group rounded-2xl border border-gray-200 dark:border-white/[0.07] bg-white dark:bg-white/[0.03] overflow-hidden flex flex-col transition-all duration-300 hover:border-accent/50 hover:shadow-[0_8px_32px_rgba(124,58,237,0.12)] hover:-translate-y-0.5">
+      {/* Quick Bookmark Button */}
+      <div className="absolute top-3 right-3 z-20">
+        <BookmarkButton
+          blogId={blog.id}
+          initialBookmarked={blog.isBookmarked}
+          size={14}
+        />
+      </div>
 
-      <div className="p-5 flex flex-col gap-2.5 flex-1">
+      <Link
+        href={`/blogs/${blog.slug}`}
+        prefetch={true}
+        className="flex flex-col flex-1 no-underline text-inherit"
+      >
+        {blog.coverImage ? (
+          <div className="relative h-44 w-full overflow-hidden">
+            <Image
+              src={blog.coverImage}
+              alt={blog.title}
+              fill
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+              className="object-cover transition-transform duration-300 group-hover:scale-105"
+            />
+          </div>
+        ) : (
+          <div className={cn("h-44 w-full bg-gradient-to-br flex items-end p-4", gradient)}>
+            {blog.isFeatured && (
+              <span className="text-xs font-semibold bg-white/20 backdrop-blur-sm text-white px-2.5 py-1 rounded-full">
+                ✦ Featured
+              </span>
+            )}
+          </div>
+        )}
+
+        <div className="p-5 flex flex-col gap-2.5 flex-1">
         {blog.tags.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
             {blog.tags.slice(0, 3).map((tag) => (
@@ -124,10 +135,12 @@ function BlogCard({ blog }: { blog: Blog }) {
         </div>
       </div>
     </Link>
+  </div>
   );
 }
 
-type SortOption = "createdAt" | "views";
+type SortOption = "createdAt" | "views" | "likes";
+type ReadTimeOption = "all" | "quick" | "medium" | "long";
 const LIMIT = 6; // 6 cards per chunk (2 rows of 3)
 
 interface BlogsFeedClientProps {
@@ -146,6 +159,7 @@ export default function BlogsFeedClient({
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("createdAt");
+  const [readTime, setReadTime] = useState<ReadTimeOption>("all");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Debounce search input
@@ -167,6 +181,7 @@ export default function BlogsFeedClient({
       params.set("order", "desc");
       if (selectedTags.length) params.set("tags", selectedTags.join(","));
       if (debouncedSearch) params.set("q", debouncedSearch);
+      if (readTime !== "all") params.set("readTime", readTime);
 
       const res = await fetch(`/api/blogs?${params.toString()}`);
       const json = await res.json();
@@ -176,7 +191,7 @@ export default function BlogsFeedClient({
         total: (json.meta?.total ?? 0) as number,
       };
     },
-    [sortBy, selectedTags, debouncedSearch]
+    [sortBy, selectedTags, debouncedSearch, readTime]
   );
 
   // Smooth Continuous Infinite Scroll
@@ -195,7 +210,7 @@ export default function BlogsFeedClient({
     initialTotal: initialMeta.total,
     limit: LIMIT,
     fetchPage,
-    resetDeps: [selectedTags, debouncedSearch, sortBy],
+    resetDeps: [selectedTags, debouncedSearch, sortBy, readTime],
   });
 
   const toggleTag = (name: string) => {
@@ -271,53 +286,91 @@ export default function BlogsFeedClient({
       </section>
 
       {/* ── Filters Bar ─────────────────────────────────────────────────── */}
-      <div className="border-y border-gray-200/80 dark:border-white/[0.07] bg-gray-50/50 dark:bg-white/[0.015] py-4 px-4 sticky top-[61px] z-30 backdrop-blur-md">
-        <div className="mx-auto max-w-6xl flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-1.5 text-xs text-gray-500 font-medium shrink-0">
-            <TagIcon size={13} />
-            Filter:
-          </div>
+      <div className="border-y border-gray-200/80 dark:border-white/[0.07] bg-gray-50/50 dark:bg-white/[0.015] py-3.5 px-4 sticky top-[61px] z-30 backdrop-blur-md">
+        <div className="mx-auto max-w-6xl flex flex-col gap-3">
+          {/* Row 1: Tags Filter & Clear */}
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-1.5 text-xs text-gray-500 font-medium shrink-0 mr-1">
+              <TagIcon size={13} />
+              Topics:
+            </div>
 
-          {tags.map((tag) => (
-            <button
-              key={tag.id}
-              onClick={() => toggleTag(tag.name)}
-              className={cn(
-                "text-xs font-semibold px-3 py-1.5 rounded-full border transition-all cursor-pointer",
-                selectedTags.includes(tag.name)
-                  ? "bg-accent text-white border-accent shadow-[0_2px_8px_rgba(124,58,237,0.3)]"
-                  : "border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-400 hover:border-accent hover:text-accent"
-              )}
-            >
-              {tag.name}
-            </button>
-          ))}
-
-          {selectedTags.length > 0 && (
-            <button
-              onClick={() => setSelectedTags([])}
-              className="text-xs text-gray-400 hover:text-red-500 transition-colors flex items-center gap-1 cursor-pointer bg-transparent border-none"
-            >
-              <X size={12} /> Clear
-            </button>
-          )}
-
-          <div className="ml-auto flex items-center gap-2 shrink-0">
-            <SlidersHorizontal size={13} className="text-gray-400" />
-            {(["createdAt", "views"] as SortOption[]).map((opt) => (
+            {tags.map((tag) => (
               <button
-                key={opt}
-                onClick={() => setSortBy(opt)}
+                key={tag.id}
+                onClick={() => toggleTag(tag.name)}
                 className={cn(
-                  "text-xs font-medium px-3 py-1.5 rounded-full border transition-all cursor-pointer",
-                  sortBy === opt
-                    ? "bg-accent text-white border-accent shadow-sm"
+                  "text-xs font-semibold px-2.5 py-1 rounded-full border transition-all cursor-pointer",
+                  selectedTags.includes(tag.name)
+                    ? "bg-accent text-white border-accent shadow-[0_2px_8px_rgba(124,58,237,0.3)]"
                     : "border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-400 hover:border-accent hover:text-accent"
                 )}
               >
-                {opt === "createdAt" ? "Latest" : "Popular"}
+                {tag.name}
               </button>
             ))}
+
+            {selectedTags.length > 0 && (
+              <button
+                onClick={() => setSelectedTags([])}
+                className="text-xs text-gray-400 hover:text-red-500 transition-colors flex items-center gap-1 cursor-pointer bg-transparent border-none ml-1"
+              >
+                <X size={12} /> Clear topics
+              </button>
+            )}
+          </div>
+
+          {/* Row 2: Reading Time & Sorting Controls */}
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-gray-200/50 dark:border-white/[0.04]">
+            {/* Reading Time */}
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="flex items-center gap-1 text-xs text-gray-400 mr-1">
+                <Clock size={12} /> Length:
+              </span>
+              {[
+                { value: "all", label: "All" },
+                { value: "quick", label: "⚡ < 3 min" },
+                { value: "medium", label: "⏱️ 3–7 min" },
+                { value: "long", label: "📖 > 7 min" },
+              ].map((rt) => (
+                <button
+                  key={rt.value}
+                  onClick={() => setReadTime(rt.value as ReadTimeOption)}
+                  className={cn(
+                    "text-xs font-medium px-2.5 py-1 rounded-lg border transition-all cursor-pointer",
+                    readTime === rt.value
+                      ? "bg-accent/15 text-accent border-accent/40 font-semibold shadow-xs"
+                      : "border-transparent text-gray-500 hover:text-gray-900 dark:hover:text-gray-200"
+                  )}
+                >
+                  {rt.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Sorting */}
+            <div className="flex items-center gap-1.5 ml-auto">
+              <SlidersHorizontal size={13} className="text-gray-400" />
+              <span className="text-xs text-gray-400 mr-1">Sort:</span>
+              {[
+                { value: "createdAt", label: "Latest" },
+                { value: "views", label: "Most Viewed" },
+                { value: "likes", label: "Most Liked" },
+              ].map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => setSortBy(opt.value as SortOption)}
+                  className={cn(
+                    "text-xs font-medium px-3 py-1 rounded-full border transition-all cursor-pointer",
+                    sortBy === opt.value
+                      ? "bg-accent text-white border-accent shadow-sm"
+                      : "border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-400 hover:border-accent hover:text-accent"
+                  )}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>

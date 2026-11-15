@@ -13,7 +13,9 @@ export async function GET(req: Request) {
     const order = searchParams.get("order")?.toLowerCase() === "asc" ? "asc" : "desc";
     const tagsParam = searchParams.get("tags");
     const search = searchParams.get("q") || "";
+    const readTimeParam = searchParams.get("readTime");
     const statusParam = searchParams.get("status");
+    const currentUser = await getCurrentUser();
 
     const where: any = {};
 
@@ -29,7 +31,18 @@ export async function GET(req: Request) {
       where.OR = [
         { title: { contains: search, mode: "insensitive" } },
         { summary: { contains: search, mode: "insensitive" } },
+        { content: { contains: search, mode: "insensitive" } },
+        { author: { name: { contains: search, mode: "insensitive" } } },
+        { author: { username: { contains: search, mode: "insensitive" } } },
       ];
+    }
+
+    if (readTimeParam === "quick") {
+      where.readingTime = { lte: 3 };
+    } else if (readTimeParam === "medium") {
+      where.readingTime = { gt: 3, lte: 7 };
+    } else if (readTimeParam === "long") {
+      where.readingTime = { gt: 7 };
     }
 
     if (tagsParam) {
@@ -39,8 +52,10 @@ export async function GET(req: Request) {
       }
     }
 
-    const orderBy: any = {};
-    if (sortBy === "views" || sortBy === "title" || sortBy === "createdAt") {
+    let orderBy: any = {};
+    if (sortBy === "likes") {
+      orderBy = { likes: { _count: "desc" } };
+    } else if (sortBy === "views" || sortBy === "title" || sortBy === "createdAt") {
       orderBy[sortBy] = order;
     } else {
       orderBy.createdAt = "desc";
@@ -69,6 +84,12 @@ export async function GET(req: Request) {
           author: { select: { id: true, username: true, name: true, email: true, avatarUrl: true } },
           tags: true,
           _count: { select: { likes: true } },
+          bookmarks: currentUser
+            ? {
+                where: { userId: currentUser.id },
+                select: { userId: true },
+              }
+            : false,
         },
         orderBy,
         skip,
@@ -79,6 +100,7 @@ export async function GET(req: Request) {
     const items = blogs.map((b) => ({
       ...b,
       likesCount: b._count.likes,
+      isBookmarked: currentUser ? ((b.bookmarks as any[])?.length > 0) : false,
     }));
 
     return NextResponse.json({

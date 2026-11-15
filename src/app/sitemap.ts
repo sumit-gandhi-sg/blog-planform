@@ -1,8 +1,9 @@
 import type { MetadataRoute } from "next";
 import prisma from "@/lib/prisma";
+import { getBaseUrl } from "@/lib/utils";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "https://inkwell.blog");
+  const appUrl = getBaseUrl();
 
   const staticRoutes: MetadataRoute.Sitemap = [
     {

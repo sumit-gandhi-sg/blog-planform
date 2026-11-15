@@ -46,3 +46,31 @@ export function getCardGradient(id: string): string {
   const idx = id.charCodeAt(0) % GRADIENTS.length;
   return GRADIENTS[idx];
 }
+
+export function getBaseUrl(): string {
+  // If explicitly set to a production domain (not localhost)
+  if (
+    process.env.NEXT_PUBLIC_APP_URL &&
+    !process.env.NEXT_PUBLIC_APP_URL.includes("localhost")
+  ) {
+    return process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, "");
+  }
+
+  // Vercel production canonical project domain
+  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
+    return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
+  }
+
+  // Vercel deployment URL
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`;
+  }
+
+  // Fallback production domain
+  if (process.env.NODE_ENV === "production") {
+    return "https://blog-planform.vercel.app";
+  }
+
+  // Local development default
+  return "http://localhost:3000";
+}

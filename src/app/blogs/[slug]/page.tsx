@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Calendar, Clock, Eye, Tag as TagIcon } from "lucide-react";
 import prisma from "@/lib/prisma";
-import { cn, formatDate, getCardGradient } from "@/lib/utils";
+import { cn, formatDate, getCardGradient, getBaseUrl } from "@/lib/utils";
 import { SafeHtml } from "@/components/ui/SafeHtml";
 import { LikeButton } from "./LikeButton";
 import { ViewTracker } from "./ViewTracker";
@@ -50,7 +50,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     return { title: "Article Not Found | Inkwell" };
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "https://inkwell.blog");
+  const appUrl = getBaseUrl();
   const url = `${appUrl}/blogs/${blog.slug}`;
   const title = blog.title;
   const description = blog.summary || blog.title;
@@ -95,7 +95,7 @@ export default async function BlogDetailPage({ params }: PageProps) {
   }
 
   const gradient = getCardGradient(blog.id);
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "https://inkwell.blog");
+  const appUrl = getBaseUrl();
 
   const jsonLd = {
     "@context": "https://schema.org",

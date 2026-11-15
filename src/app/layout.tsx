@@ -5,8 +5,9 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ToastProvider } from "@/contexts/ToastContext";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
+import { getBaseUrl } from "@/lib/utils";
 
-const appUrl = process.env.NEXT_PUBLIC_APP_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "https://inkwell.blog");
+const appUrl = getBaseUrl();
 
 export const metadata: Metadata = {
   metadataBase: new URL(appUrl),

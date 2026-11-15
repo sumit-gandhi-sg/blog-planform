@@ -204,11 +204,22 @@ export default function BlogsFeedClient({
     );
   };
 
+  const [showBackToTop, setShowBackToTop] = useState(false);
+
+  // Monitor real window scroll position so the button auto-hides when user is at the top
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowBackToTop(window.scrollY > 400);
+    };
+
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
-
-  const showBackToTop = activePages.length > 1;
 
   return (
     <div className="min-h-screen">
@@ -376,16 +387,19 @@ export default function BlogsFeedClient({
           </div>
         )}
 
-        {/* ── Floating "Back to Top" Button ──────────────────────────────── */}
-        {showBackToTop && (
-          <button
-            onClick={scrollToTop}
-            aria-label="Back to top"
-            className="fixed bottom-6 right-6 z-40 p-3 rounded-full bg-accent text-white shadow-lg hover:bg-accent-dark transition-all duration-300 hover:scale-110 flex items-center justify-center cursor-pointer border-none"
-          >
-            <ArrowUp size={18} />
-          </button>
-        )}
+        {/* ── Floating "Back to Top" Button with Smooth Fade ──────────────── */}
+        <button
+          onClick={scrollToTop}
+          aria-label="Back to top"
+          className={cn(
+            "fixed bottom-6 right-6 z-40 p-3 rounded-full bg-accent text-white shadow-xl hover:bg-accent-dark transition-all duration-300 flex items-center justify-center cursor-pointer border-none hover:scale-110",
+            showBackToTop
+              ? "opacity-100 translate-y-0 pointer-events-auto"
+              : "opacity-0 translate-y-4 pointer-events-none"
+          )}
+        >
+          <ArrowUp size={18} />
+        </button>
       </section>
     </div>
   );

@@ -6,6 +6,7 @@ import { MessageSquare, Heart, CornerDownRight, Trash2, Send, Loader2 } from "lu
 import type { CommentItem } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/contexts/ToastContext";
+import { useConfirm } from "@/contexts/ConfirmContext";
 import { cn } from "@/lib/utils";
 
 function timeAgo(dateString: string): string {
@@ -41,6 +42,7 @@ function CommentCard({
 }: CommentCardProps) {
   const { user } = useAuth();
   const toast = useToast();
+  const { confirm } = useConfirm();
 
   const [likesCount, setLikesCount] = useState(comment.likesCount);
   const [hasLiked, setHasLiked] = useState(comment.hasLiked || false);
@@ -116,7 +118,13 @@ function CommentCard({
   };
 
   const handleDelete = async () => {
-    if (!confirm("Are you sure you want to delete this comment?")) return;
+    const ok = await confirm({
+      title: "Delete Comment",
+      message: "Are you sure you want to delete this comment? Replies will also be removed.",
+      confirmText: "Delete",
+      variant: "danger",
+    });
+    if (!ok) return;
 
     setIsDeleting(true);
     try {

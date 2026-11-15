@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/contexts/ToastContext";
+import { useConfirm } from "@/contexts/ConfirmContext";
 
 const lowlight = createLowlight(common);
 
@@ -67,16 +68,25 @@ function Toolbar({
   uploading: boolean;
   onImageUpload: () => void;
 }) {
-  const setLink = useCallback(() => {
+  const { prompt } = useConfirm();
+
+  const setLink = useCallback(async () => {
     const previous = editor.getAttributes("link").href as string | undefined;
-    const url = window.prompt("URL", previous ?? "https://");
+    const url = await prompt({
+      title: "Insert Link",
+      message: "Enter the web address (URL) you want to link to:",
+      placeholder: "https://example.com",
+      defaultValue: previous ?? "https://",
+      inputType: "url",
+      confirmText: "Save Link",
+    });
     if (url === null) return;
-    if (url === "") {
+    if (url.trim() === "" || url.trim() === "https://") {
       editor.chain().focus().extendMarkRange("link").unsetLink().run();
       return;
     }
-    editor.chain().focus().extendMarkRange("link").setLink({ href: url }).run();
-  }, [editor]);
+    editor.chain().focus().extendMarkRange("link").setLink({ href: url.trim() }).run();
+  }, [editor, prompt]);
 
   return (
     <div className="flex flex-wrap items-center gap-0.5 px-3 py-2 border-b border-gray-200 dark:border-white/[0.07] bg-gray-50/70 dark:bg-white/[0.02] rounded-t-2xl">
@@ -163,9 +173,15 @@ function Toolbar({
 
       <ToolbarButton
         title="Insert image by URL"
-        onClick={() => {
-          const url = window.prompt("Image URL");
-          if (url) editor.chain().focus().setImage({ src: url }).run();
+        onClick={async () => {
+          const url = await prompt({
+            title: "Insert Image URL",
+            message: "Paste a direct web link to an image (JPEG, PNG, WebP):",
+            placeholder: "https://images.unsplash.com/...",
+            inputType: "url",
+            confirmText: "Insert Image",
+          });
+          if (url && url.trim()) editor.chain().focus().setImage({ src: url.trim() }).run();
         }}
       >
         <ImageIcon size={14} />

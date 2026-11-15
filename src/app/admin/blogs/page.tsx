@@ -23,9 +23,11 @@ import {
 import type { AdminBlogListItem } from "@/types";
 import { formatDate, getCardGradient } from "@/lib/utils";
 import { useToast } from "@/contexts/ToastContext";
+import { useConfirm } from "@/contexts/ConfirmContext";
 
 export default function AdminBlogsPage() {
   const { success, error: toastError, info } = useToast();
+  const { confirm } = useConfirm();
   const [blogs, setBlogs] = useState<AdminBlogListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -114,13 +116,13 @@ export default function AdminBlogsPage() {
   };
 
   const handleDelete = async (id: string, title: string) => {
-    if (
-      !confirm(
-        `Are you sure you want to permanently delete "${title}"? This cannot be undone.`
-      )
-    ) {
-      return;
-    }
+    const ok = await confirm({
+      title: "Delete Article Permanently",
+      message: `Are you sure you want to permanently delete "${title}"? This action cannot be undone.`,
+      confirmText: "Delete Article",
+      variant: "danger",
+    });
+    if (!ok) return;
 
     setActionLoadingId(id);
     try {

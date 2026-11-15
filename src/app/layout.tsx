@@ -3,6 +3,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ToastProvider } from "@/contexts/ToastContext";
+import { ConfirmProvider } from "@/contexts/ConfirmContext";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { getBaseUrl } from "@/lib/utils";
@@ -49,9 +50,11 @@ export default function RootLayout({
         <ThemeProvider defaultTheme="light" storageKey="inkwell-theme">
           <AuthProvider>
             <ToastProvider>
-              <Navbar />
-              <main className="flex-1">{children}</main>
-              <Footer />
+              <ConfirmProvider>
+                <Navbar />
+                <main className="flex-1">{children}</main>
+                <Footer />
+              </ConfirmProvider>
             </ToastProvider>
           </AuthProvider>
         </ThemeProvider>

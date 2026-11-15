@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { BookOpen, PenLine, Trash2, ExternalLink, Calendar, Eye, Heart, Plus } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/contexts/ToastContext";
+import { useConfirm } from "@/contexts/ConfirmContext";
 import type { Blog } from "@/types";
 import { formatDate } from "@/lib/utils";
 
@@ -13,6 +14,7 @@ export default function MyBlogsPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const { success, error: toastError } = useToast();
+  const { confirm } = useConfirm();
   const [blogs, setBlogs] = useState<Blog[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -44,9 +46,13 @@ export default function MyBlogsPage() {
   }, [user]);
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this article? This action cannot be undone.")) {
-      return;
-    }
+    const ok = await confirm({
+      title: "Delete Article",
+      message: "Are you sure you want to delete this article? This action cannot be undone.",
+      confirmText: "Delete Article",
+      variant: "danger",
+    });
+    if (!ok) return;
 
     setDeletingId(id);
     try {

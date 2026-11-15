@@ -12,9 +12,11 @@ import {
 } from "lucide-react";
 import type { AdminTagListItem } from "@/types";
 import { useToast } from "@/contexts/ToastContext";
+import { useConfirm } from "@/contexts/ConfirmContext";
 
 export default function AdminTagsPage() {
   const { success, error: toastError } = useToast();
+  const { confirm } = useConfirm();
   const [tags, setTags] = useState<AdminTagListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [newTagName, setNewTagName] = useState("");
@@ -71,10 +73,16 @@ export default function AdminTagsPage() {
   const handleDeleteTag = async (id: string, name: string, blogCount: number) => {
     const warning =
       blogCount > 0
-        ? `Warning: "${name}" is attached to ${blogCount} article(s). Deleting it will detach it from those articles. Proceed?`
-        : `Are you sure you want to delete tag "${name}"?`;
+        ? `"${name}" is currently attached to ${blogCount} article(s). Deleting it will detach it from all articles.`
+        : `Are you sure you want to permanently delete the tag "${name}"?`;
 
-    if (!confirm(warning)) return;
+    const ok = await confirm({
+      title: "Delete Tag",
+      message: warning,
+      confirmText: "Delete Tag",
+      variant: blogCount > 0 ? "warning" : "danger",
+    });
+    if (!ok) return;
 
     setActionLoadingId(id);
     try {

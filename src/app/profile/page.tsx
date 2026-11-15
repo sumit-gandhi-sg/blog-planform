@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/contexts/ToastContext";
+import { useConfirm } from "@/contexts/ConfirmContext";
 import { cn, formatDate, getCardGradient } from "@/lib/utils";
 import type { BookmarkItem, ReadingHistoryItem } from "@/types";
 
@@ -47,6 +48,7 @@ function timeAgo(dateString: string): string {
 export default function ProfilePage() {
   const { user, loading: authLoading, refreshUser } = useAuth();
   const toast = useToast();
+  const { confirm } = useConfirm();
   const router = useRouter();
 
   const [activeTab, setActiveTab] = useState<ProfileTab>("bookmarks");
@@ -151,7 +153,14 @@ export default function ProfilePage() {
 
   // Handle Clear All History
   const handleClearAllHistory = async () => {
-    if (!confirm("Are you sure you want to clear your entire reading history?")) return;
+    const ok = await confirm({
+      title: "Clear Reading History",
+      message: "Are you sure you want to clear your entire reading history? This cannot be undone.",
+      confirmText: "Clear History",
+      variant: "danger",
+    });
+    if (!ok) return;
+
     setClearingHistory(true);
     try {
       const res = await fetch("/api/user/history", { method: "DELETE" });

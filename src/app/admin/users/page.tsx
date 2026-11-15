@@ -18,12 +18,14 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/contexts/ToastContext";
+import { useConfirm } from "@/contexts/ConfirmContext";
 import type { AdminUserListItem } from "@/types";
 import { formatDate } from "@/lib/utils";
 
 export default function AdminUsersPage() {
   const { user: currentAdmin } = useAuth();
   const { success, error: toastError, info } = useToast();
+  const { confirm } = useConfirm();
   const [users, setUsers] = useState<AdminUserListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -74,12 +76,17 @@ export default function AdminUsersPage() {
     }
 
     const newRole = targetUser.role === "ADMIN" ? "USER" : "ADMIN";
-    const confirmMsg =
-      newRole === "ADMIN"
-        ? `Are you sure you want to promote @${targetUser.username} to ADMINISTRATOR? They will have full access to manage users and articles.`
-        : `Are you sure you want to demote @${targetUser.username} to a regular USER?`;
+    const isPromote = newRole === "ADMIN";
 
-    if (!confirm(confirmMsg)) return;
+    const ok = await confirm({
+      title: isPromote ? "Promote User to Admin" : "Demote Admin to User",
+      message: isPromote
+        ? `Are you sure you want to promote @${targetUser.username} to ADMINISTRATOR? They will have full access to manage users, tags, and articles.`
+        : `Are you sure you want to demote @${targetUser.username} to a regular USER?`,
+      confirmText: isPromote ? "Promote to Admin" : "Demote User",
+      variant: isPromote ? "warning" : "danger",
+    });
+    if (!ok) return;
 
     setActionLoadingId(targetUser.id);
     try {
@@ -106,11 +113,16 @@ export default function AdminUsersPage() {
 
   const handleToggleVerification = async (targetUser: AdminUserListItem) => {
     const newStatus = !targetUser.isEmailVerified;
-    const confirmMsg = newStatus
-      ? `Manually verify email for @${targetUser.username}? (Bypasses OTP verification)`
-      : `Revoke email verification for @${targetUser.username}?`;
 
-    if (!confirm(confirmMsg)) return;
+    const ok = await confirm({
+      title: newStatus ? "Manually Verify Email" : "Revoke Email Verification",
+      message: newStatus
+        ? `Manually mark email as verified for @${targetUser.username}? (Bypasses OTP verification)`
+        : `Revoke email verified status for @${targetUser.username}?`,
+      confirmText: newStatus ? "Verify Email" : "Revoke Verification",
+      variant: newStatus ? "primary" : "warning",
+    });
+    if (!ok) return;
 
     setActionLoadingId(targetUser.id);
     try {
@@ -143,13 +155,13 @@ export default function AdminUsersPage() {
       return;
     }
 
-    if (
-      !confirm(
-        `Are you sure you want to permanently delete user @${targetUser.username}? All their published content will also be removed.`
-      )
-    ) {
-      return;
-    }
+    const ok = await confirm({
+      title: "Delete User Permanently",
+      message: `Are you sure you want to permanently delete user @${targetUser.username}? All their articles, comments, and data will also be removed.`,
+      confirmText: "Delete User",
+      variant: "danger",
+    });
+    if (!ok) return;
 
     setActionLoadingId(targetUser.id);
     try {

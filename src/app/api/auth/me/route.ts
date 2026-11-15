@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "@/lib/jwt";
 import prisma from "@/lib/prisma";
 import { invalidateCache } from "@/lib/memoryCache";
@@ -64,7 +65,11 @@ export async function PUT(req: Request) {
       },
     });
 
-    invalidateCache(); // Clear caches so updated name/avatar appears immediately across all feeds
+    invalidateCache(); // Clear memory caches
+    try {
+      revalidatePath("/blogs");
+      revalidatePath("/profile");
+    } catch {}
 
     return NextResponse.json({
       success: true,

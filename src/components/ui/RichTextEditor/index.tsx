@@ -18,6 +18,7 @@ import {
   Upload, Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/contexts/ToastContext";
 
 const lowlight = createLowlight(common);
 
@@ -190,6 +191,7 @@ export function RichTextEditor({
   placeholder = "Start writing your article…",
   minHeight = "420px",
 }: RichTextEditorProps) {
+  const { success, error: toastError } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
 
@@ -231,16 +233,17 @@ export function RichTextEditor({
         const data = await res.json();
         if (data.url) {
           editor.chain().focus().setImage({ src: data.url, alt: file.name }).run();
+          success("Image inserted into editor");
         } else {
-          alert(data.message || "Upload failed");
+          toastError(data.message || "Upload failed");
         }
       } catch {
-        alert("Image upload failed. Please try again.");
+        toastError("Image upload failed. Please try again.");
       } finally {
         setUploading(false);
       }
     },
-    [editor]
+    [editor, success, toastError]
   );
 
   if (!editor) return null;

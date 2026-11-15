@@ -17,11 +17,13 @@ import {
   Loader2,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/contexts/ToastContext";
 import type { AdminUserListItem } from "@/types";
 import { formatDate } from "@/lib/utils";
 
 export default function AdminUsersPage() {
   const { user: currentAdmin } = useAuth();
+  const { success, error: toastError, info } = useToast();
   const [users, setUsers] = useState<AdminUserListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -52,14 +54,14 @@ export default function AdminUsersPage() {
         setTotalPages(json.meta.totalPages || 1);
         setTotal(json.meta.total || 0);
       } else {
-        alert(json.message || "Failed to retrieve users");
+        toastError(json.message || "Failed to retrieve users");
       }
     } catch (err: any) {
       console.error(err);
     } finally {
       setLoading(false);
     }
-  }, [page, roleFilter, search]);
+  }, [page, roleFilter, search, toastError]);
 
   useEffect(() => {
     fetchUsers();
@@ -67,7 +69,7 @@ export default function AdminUsersPage() {
 
   const handleToggleRole = async (targetUser: AdminUserListItem) => {
     if (targetUser.id === currentAdmin?.id) {
-      alert("You cannot modify your own administrator role.");
+      toastError("You cannot modify your own administrator role.");
       return;
     }
 
@@ -90,12 +92,13 @@ export default function AdminUsersPage() {
         setUsers((prev) =>
           prev.map((u) => (u.id === targetUser.id ? { ...u, role: newRole } : u))
         );
+        success(`User @${targetUser.username} role updated to ${newRole}`);
       } else {
         const json = await res.json();
-        alert(json.message || "Failed to update role");
+        toastError(json.message || "Failed to update role");
       }
     } catch {
-      alert("Error updating role");
+      toastError("Error updating role");
     } finally {
       setActionLoadingId(null);
     }
@@ -122,12 +125,13 @@ export default function AdminUsersPage() {
             u.id === targetUser.id ? { ...u, isEmailVerified: newStatus } : u
           )
         );
+        success(newStatus ? `Verified email for @${targetUser.username}` : `Revoked verification for @${targetUser.username}`);
       } else {
         const json = await res.json();
-        alert(json.message || "Failed to update verification status");
+        toastError(json.message || "Failed to update verification status");
       }
     } catch {
-      alert("Error updating verification status");
+      toastError("Error updating verification status");
     } finally {
       setActionLoadingId(null);
     }
@@ -135,7 +139,7 @@ export default function AdminUsersPage() {
 
   const handleDeleteUser = async (targetUser: AdminUserListItem) => {
     if (targetUser.id === currentAdmin?.id) {
-      alert("You cannot delete your own account.");
+      toastError("You cannot delete your own account.");
       return;
     }
 
@@ -155,12 +159,13 @@ export default function AdminUsersPage() {
       if (res.ok) {
         setUsers((prev) => prev.filter((u) => u.id !== targetUser.id));
         setTotal((prev) => Math.max(0, prev - 1));
+        success(`User @${targetUser.username} has been deleted.`);
       } else {
         const json = await res.json();
-        alert(json.message || "Failed to delete user");
+        toastError(json.message || "Failed to delete user");
       }
     } catch {
-      alert("Error deleting user");
+      toastError("Error deleting user");
     } finally {
       setActionLoadingId(null);
     }

@@ -6,6 +6,7 @@ import { ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { ControlledOtpField } from "@/components/ui/ControlledOtpField";
 import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/contexts/ToastContext";
 import { cn } from "@/lib/utils";
 
 interface OtpFormValues {
@@ -15,6 +16,7 @@ interface OtpFormValues {
 export default function OtpVerifyPage() {
   const router = useRouter();
   const { verifyOtp, pendingEmail } = useAuth();
+  const { success, error: toastError } = useToast();
 
   const methods = useForm<OtpFormValues>({
     defaultValues: { otp: "" },
@@ -27,11 +29,13 @@ export default function OtpVerifyPage() {
     methods.clearErrors("root");
     try {
       await verifyOtp(otp);
+      success("Email verified successfully! Welcome to Inkwell.");
       router.push("/blogs");
     } catch (err: any) {
       methods.setError("root", {
         message: err.message || "Invalid verification code.",
       });
+      toastError(err.message || "Invalid verification code.");
     }
   });
 

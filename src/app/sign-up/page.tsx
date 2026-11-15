@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { ControlledTextField } from "@/components/ui/ControlledTextField";
 import { ControlledPasswordField } from "@/components/ui/ControlledPasswordField";
 import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/contexts/ToastContext";
 import { cn } from "@/lib/utils";
 
 interface SignUpFormValues {
@@ -19,6 +20,7 @@ interface SignUpFormValues {
 export default function SignUpPage() {
   const router = useRouter();
   const { signup } = useAuth();
+  const { info, error: toastError } = useToast();
 
   const methods = useForm<SignUpFormValues>({
     defaultValues: { username: "", email: "", password: "" },
@@ -30,14 +32,16 @@ export default function SignUpPage() {
   const handleSubmit = methods.handleSubmit(async ({ username, email, password }) => {
     methods.clearErrors("root");
     try {
-      const success = await signup(username, email, password);
-      if (success) {
+      const res = await signup(username, email, password);
+      if (res) {
+        info("Account created! A verification code has been sent to your email.");
         router.push("/otp-verify");
       }
     } catch (error: any) {
       methods.setError("root", {
         message: error.message || "Registration failed. Please try again.",
       });
+      toastError(error.message || "Registration failed. Please try again.");
     }
   });
 

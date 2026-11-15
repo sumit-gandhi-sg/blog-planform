@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { ControlledTextField } from "@/components/ui/ControlledTextField";
 import { ControlledPasswordField } from "@/components/ui/ControlledPasswordField";
 import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/contexts/ToastContext";
 import { cn } from "@/lib/utils";
 
 interface SignInFormValues {
@@ -18,6 +19,7 @@ interface SignInFormValues {
 export default function SignInPage() {
   const router = useRouter();
   const { login } = useAuth();
+  const { success, error: toastError, info } = useToast();
 
   const methods = useForm<SignInFormValues>({
     defaultValues: { email: "", password: "" },
@@ -31,14 +33,17 @@ export default function SignInPage() {
     try {
       const res = await login(email, password);
       if (res?.navigate === "otp-verify" || !res?.user?.isEmailVerified) {
+        info("Please verify your email to complete login.");
         router.push("/otp-verify");
       } else {
+        success(`Welcome back, @${res.user?.username || "writer"}!`);
         router.push("/blogs");
       }
     } catch (error: any) {
       methods.setError("root", {
         message: error.message || "Invalid credentials. Please try again.",
       });
+      toastError(error.message || "Invalid email or password.");
     }
   });
 

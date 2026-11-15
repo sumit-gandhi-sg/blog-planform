@@ -5,12 +5,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { BookOpen, PenLine, Trash2, ExternalLink, Calendar, Eye, Heart, Plus } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/contexts/ToastContext";
 import type { Blog } from "@/types";
 import { formatDate } from "@/lib/utils";
 
 export default function MyBlogsPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
+  const { success, error: toastError } = useToast();
   const [blogs, setBlogs] = useState<Blog[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -51,11 +53,12 @@ export default function MyBlogsPage() {
       const res = await fetch(`/api/blogs/${id}`, { method: "DELETE" });
       if (res.ok) {
         setBlogs((prev) => prev.filter((b) => b.id !== id));
+        success("Article deleted successfully");
       } else {
-        alert("Failed to delete article");
+        toastError("Failed to delete article");
       }
     } catch {
-      alert("Error deleting article");
+      toastError("Error deleting article");
     } finally {
       setDeletingId(null);
     }

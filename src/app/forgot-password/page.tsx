@@ -10,11 +10,13 @@ import { ControlledTextField } from "@/components/ui/ControlledTextField";
 import { ControlledOtpField } from "@/components/ui/ControlledOtpField";
 import { ControlledPasswordField } from "@/components/ui/ControlledPasswordField";
 import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/contexts/ToastContext";
 import { cn } from "@/lib/utils";
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
   const { forgetPassword, verifyForgetOtp, resetPassword } = useAuth();
+  const { success, error: toastError, info } = useToast();
   const [step, setStep] = useState<"EMAIL" | "OTP" | "NEW_PASSWORD">("EMAIL");
   const [userEmail, setUserEmail] = useState("");
 
@@ -30,8 +32,10 @@ export default function ForgotPasswordPage() {
       await forgetPassword(email);
       setUserEmail(email);
       setStep("OTP");
+      info("Verification code sent! Please check your email.");
     } catch (err: any) {
       emailMethods.setError("root", { message: err.message || "Failed to send reset code" });
+      toastError(err.message || "Failed to send reset code");
     }
   });
 
@@ -40,8 +44,10 @@ export default function ForgotPasswordPage() {
     try {
       await verifyForgetOtp(otp);
       setStep("NEW_PASSWORD");
+      success("Code verified! You can now choose a new password.");
     } catch (err: any) {
       otpMethods.setError("root", { message: err.message || "Invalid or expired code" });
+      toastError(err.message || "Invalid or expired code");
     }
   });
 
@@ -49,14 +55,16 @@ export default function ForgotPasswordPage() {
     passMethods.clearErrors("root");
     if (password !== confirmPassword) {
       passMethods.setError("confirmPassword", { message: "Passwords do not match" });
+      toastError("Passwords do not match. Please re-enter.");
       return;
     }
     try {
       await resetPassword(password);
-      alert("Password reset successfully! Please sign in with your new password.");
+      success("Password reset successfully! Please sign in with your new password.");
       router.push("/sign-in");
     } catch (err: any) {
       passMethods.setError("root", { message: err.message || "Failed to reset password" });
+      toastError(err.message || "Failed to reset password");
     }
   });
 

@@ -22,8 +22,10 @@ import {
 } from "lucide-react";
 import type { AdminBlogListItem } from "@/types";
 import { formatDate, getCardGradient } from "@/lib/utils";
+import { useToast } from "@/contexts/ToastContext";
 
 export default function AdminBlogsPage() {
+  const { success, error: toastError, info } = useToast();
   const [blogs, setBlogs] = useState<AdminBlogListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -52,14 +54,14 @@ export default function AdminBlogsPage() {
         setTotalPages(json.meta.totalPages || 1);
         setTotal(json.meta.total || 0);
       } else {
-        alert(json.message || "Failed to retrieve articles");
+        toastError(json.message || "Failed to retrieve articles");
       }
     } catch (err: any) {
       console.error(err);
     } finally {
       setLoading(false);
     }
-  }, [page, statusFilter, search]);
+  }, [page, statusFilter, search, toastError]);
 
   useEffect(() => {
     fetchBlogs();
@@ -77,12 +79,13 @@ export default function AdminBlogsPage() {
         setBlogs((prev) =>
           prev.map((b) => (b.id === id ? { ...b, isFeatured: !current } : b))
         );
+        success(!current ? "Article featured on homepage!" : "Article unfeatured.");
       } else {
         const json = await res.json();
-        alert(json.message || "Failed to update feature status");
+        toastError(json.message || "Failed to update feature status");
       }
     } catch {
-      alert("Error updating feature status");
+      toastError("Error updating feature status");
     } finally {
       setActionLoadingId(null);
     }
@@ -97,13 +100,14 @@ export default function AdminBlogsPage() {
         body: JSON.stringify({ id, status: newStatus }),
       });
       if (res.ok) {
+        success(newStatus === "ARCHIVED" ? "Article archived and hidden from public feed." : "Article restored and published!");
         fetchBlogs();
       } else {
         const json = await res.json();
-        alert(json.message || "Failed to change article status");
+        toastError(json.message || "Failed to change article status");
       }
     } catch {
-      alert("Error changing status");
+      toastError("Error changing status");
     } finally {
       setActionLoadingId(null);
     }
@@ -126,12 +130,13 @@ export default function AdminBlogsPage() {
       if (res.ok) {
         setBlogs((prev) => prev.filter((b) => b.id !== id));
         setTotal((prev) => Math.max(0, prev - 1));
+        success("Article permanently deleted.");
       } else {
         const json = await res.json();
-        alert(json.message || "Failed to delete article");
+        toastError(json.message || "Failed to delete article");
       }
     } catch {
-      alert("Error deleting article");
+      toastError("Error deleting article");
     } finally {
       setActionLoadingId(null);
     }

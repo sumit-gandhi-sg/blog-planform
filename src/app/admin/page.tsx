@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import type { AdminStats } from "@/types";
 import { formatDate } from "@/lib/utils";
+import { useToast } from "@/contexts/ToastContext";
 
 interface DashboardData {
   stats: AdminStats;
@@ -28,6 +29,7 @@ interface DashboardData {
 }
 
 export default function AdminOverviewPage() {
+  const { success, error: toastError } = useToast();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -70,9 +72,12 @@ export default function AdminOverviewPage() {
             ),
           };
         });
+        success(!current ? "Article featured on homepage!" : "Article unfeatured.");
+      } else {
+        toastError("Failed to update feature status");
       }
     } catch (err) {
-      alert("Failed to update feature status");
+      toastError("Failed to update feature status");
     }
   };
 

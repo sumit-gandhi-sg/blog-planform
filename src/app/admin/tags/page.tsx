@@ -11,8 +11,10 @@ import {
   AlertCircle,
 } from "lucide-react";
 import type { AdminTagListItem } from "@/types";
+import { useToast } from "@/contexts/ToastContext";
 
 export default function AdminTagsPage() {
+  const { success, error: toastError } = useToast();
   const [tags, setTags] = useState<AdminTagListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [newTagName, setNewTagName] = useState("");
@@ -27,14 +29,14 @@ export default function AdminTagsPage() {
       if (res.ok && json.success) {
         setTags(json.data);
       } else {
-        alert(json.message || "Failed to fetch tags");
+        toastError(json.message || "Failed to fetch tags");
       }
     } catch (err: any) {
       console.error(err);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [toastError]);
 
   useEffect(() => {
     fetchTags();
@@ -54,12 +56,13 @@ export default function AdminTagsPage() {
       const json = await res.json();
       if (res.ok && json.success) {
         setNewTagName("");
+        success(`Tag "${json.data?.name || newTagName}" created successfully!`);
         fetchTags();
       } else {
-        alert(json.message || "Failed to create tag");
+        toastError(json.message || "Failed to create tag");
       }
     } catch {
-      alert("Error creating tag");
+      toastError("Error creating tag");
     } finally {
       setSubmitting(false);
     }
@@ -80,12 +83,13 @@ export default function AdminTagsPage() {
       });
       if (res.ok) {
         setTags((prev) => prev.filter((t) => t.id !== id));
+        success(`Tag "${name}" deleted.`);
       } else {
         const json = await res.json();
-        alert(json.message || "Failed to delete tag");
+        toastError(json.message || "Failed to delete tag");
       }
     } catch {
-      alert("Error deleting tag");
+      toastError("Error deleting tag");
     } finally {
       setActionLoadingId(null);
     }

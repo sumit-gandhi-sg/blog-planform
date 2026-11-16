@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/jwt";
 import { calculateReadingTime } from "@/lib/utils";
@@ -70,6 +71,18 @@ export async function PUT(
 
     invalidateCache("blogs");
 
+    // Instantly purge Vercel CDN cache for this article and the feed
+    try {
+      revalidatePath(`/blogs/${updated.slug}`);
+      if (existing.slug !== updated.slug) {
+        revalidatePath(`/blogs/${existing.slug}`);
+      }
+      revalidatePath("/blogs");
+      revalidatePath("/");
+    } catch (e) {
+      console.warn("revalidatePath error:", e);
+    }
+
     return NextResponse.json({
       success: true,
       message: "Article updated successfully",
@@ -113,6 +126,15 @@ export async function DELETE(
     await prisma.blog.delete({ where: { id } });
 
     invalidateCache("blogs");
+
+    // Instantly purge Vercel CDN cache for the deleted article and the feed
+    try {
+      revalidatePath(`/blogs/${existing.slug}`);
+      revalidatePath("/blogs");
+      revalidatePath("/");
+    } catch (e) {
+      console.warn("revalidatePath error:", e);
+    }
 
     return NextResponse.json({
       success: true,

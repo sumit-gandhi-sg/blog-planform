@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/jwt";
 import { calculateReadingTime, slugify } from "@/lib/utils";
@@ -174,6 +175,17 @@ export async function POST(req: Request) {
     });
 
     invalidateCache("blogs");
+
+    // Instantly purge Vercel CDN cache so the new article is live immediately
+    try {
+      if (isPublished) {
+        revalidatePath(`/blogs/${blog.slug}`);
+      }
+      revalidatePath("/blogs");
+      revalidatePath("/");
+    } catch (e) {
+      console.warn("revalidatePath error:", e);
+    }
 
     return NextResponse.json(
       {
